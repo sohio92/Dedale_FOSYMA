@@ -47,16 +47,17 @@ public class ShareMap extends TickerBehaviour{
 	 */
 	public ShareMap (final Agent myagent, MapRepresentation myMap, ArrayList<String> openNodes, HashSet<String> closedNodes) {
 		super(myagent, 3000);
-		if(myMap==null) {
-			this.myMap= new MapRepresentation();
-		}else {
-			this.myMap = myMap;
-		}
-		this.contenu = new MessageContainer(this.myMap.getSg(), openNodes, closedNodes, ((ExploreMultiAgent)this.myAgent).getIntention());
+		
+		this.myMap = myMap;
+		this.contenu = new MessageContainer(null, openNodes, closedNodes, ((ExploreMultiAgent)this.myAgent).getIntention());
 	}
 
 	@Override
 	public void onTick() {
+		if(myMap==null) {
+			this.myMap= new MapRepresentation();
+		}
+		
 		this.contenu.updateSg(this.myMap.getSg());
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
