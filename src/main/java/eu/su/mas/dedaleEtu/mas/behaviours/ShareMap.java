@@ -35,6 +35,10 @@ public class ShareMap extends TickerBehaviour{
 	 * Container of the message to send
 	 **/
 	private MessageContainer contenu;
+	/**
+	 * Map which is going to be shared
+	 */
+	private MapRepresentation myMap;
 	
 	/**
 	 * An agent tries to contact its friend and to give him its current position
@@ -43,13 +47,17 @@ public class ShareMap extends TickerBehaviour{
 	 */
 	public ShareMap (final Agent myagent, MapRepresentation myMap, ArrayList<String> openNodes, HashSet<String> closedNodes) {
 		super(myagent, 3000);
-		if(myMap==null)
-			myMap= new MapRepresentation();
+		if(myMap==null) {
+			this.myMap= new MapRepresentation();
+		}else {
+			this.myMap = myMap;
+		}
 		this.contenu = new MessageContainer(myMap.getSg(), openNodes, closedNodes, ((ExploreMultiAgent)this.myAgent).getIntention());
 	}
 
 	@Override
 	public void onTick() {
+		this.contenu.updateSg(this.myMap.getSg());
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
 		//A message is defined by : a performative, a sender, a set of receivers, (a protocol),(a content (and/or contentOBject))
@@ -66,8 +74,8 @@ public class ShareMap extends TickerBehaviour{
 				e.printStackTrace();
 			}
 
-			msg.addReceiver(new AID("Collect1",AID.ISLOCALNAME));
-			msg.addReceiver(new AID("Collect2",AID.ISLOCALNAME));
+			msg.addReceiver(new AID("Explo1",AID.ISLOCALNAME));
+			msg.addReceiver(new AID("Explo2",AID.ISLOCALNAME));
 
 			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);

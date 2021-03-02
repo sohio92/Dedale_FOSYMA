@@ -108,14 +108,15 @@ public class MapRepresentation implements Serializable {
 	 * Fuse two maps together
 	 */
 	public void fuseMap(SerializableSimpleGraph<String, MapAttribute> sg2) {
-		System.out.println("\\n\\n\\n\\n\\n\\n\\n\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n");
 		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
+			addNode(n.getNodeId(), n.getNodeContent());
+		}
+		for (SerializableNode<String, MapAttribute> n: this.getSg().getAllNodes()){
 			addNode(n.getNodeId(), n.getNodeContent());
 			for(String s:sg2.getEdges(n.getNodeId())){
 				addEdge(n.getNodeId(),s);
 			}
 		}
-		System.out.println("FUSE done");
 	}
 	
 	public SerializableSimpleGraph<String, MapAttribute> getSg(){

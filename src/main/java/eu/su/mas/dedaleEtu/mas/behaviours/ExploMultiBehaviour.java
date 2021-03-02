@@ -109,6 +109,7 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 				
 				// Update the agent's map by mixing the two together
 				this.myMap.fuseMap(receivedSg);
+				System.out.println("Fused MAP : "+((AbstractDedaleAgent)this.myAgent).getLocalName());
 				
 				// Update our nodes
 				receivedOpen.removeAll(this.closedNodes);

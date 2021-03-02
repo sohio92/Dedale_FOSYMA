@@ -26,6 +26,10 @@ public class MessageContainer implements Serializable{
 		this.intention = intention;
 	}
 	
+	public void updateSg(SerializableSimpleGraph<String, MapAttribute> newSg) {
+		this.sg = newSg;
+	}
+	
 	public SerializableSimpleGraph<String, MapAttribute> getGraph(){
 		return this.sg;
 	}
