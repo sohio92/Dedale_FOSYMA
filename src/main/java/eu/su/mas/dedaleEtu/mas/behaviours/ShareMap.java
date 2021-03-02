@@ -52,7 +52,7 @@ public class ShareMap extends TickerBehaviour{
 		}else {
 			this.myMap = myMap;
 		}
-		this.contenu = new MessageContainer(myMap.getSg(), openNodes, closedNodes, ((ExploreMultiAgent)this.myAgent).getIntention());
+		this.contenu = new MessageContainer(this.myMap.getSg(), openNodes, closedNodes, ((ExploreMultiAgent)this.myAgent).getIntention());
 	}
 
 	@Override
