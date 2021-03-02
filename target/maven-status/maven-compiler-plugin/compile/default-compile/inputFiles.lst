@@ -1,0 +1,14 @@
+/home/ubuntu/WorkSpace/fosyma/projet/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/princ/ConfigurationFile.java
+/home/ubuntu/WorkSpace/fosyma/projet/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/behaviours/RandomWalkBehaviour.java
+/home/ubuntu/WorkSpace/fosyma/projet/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/agents/dummies/DummyTankerAgent.java
+/home/ubuntu/WorkSpace/fosyma/projet/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/agents/dummies/ExploreMultiAgent.java
+/home/ubuntu/WorkSpace/fosyma/projet/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/behaviours/ShareMap.java
+/home/ubuntu/WorkSpace/fosyma/projet/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/knowledge/MapRepresentation.java
+/home/ubuntu/WorkSpace/fosyma/projet/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/agents/dummies/ExploreSoloAgent.java
+/home/ubuntu/WorkSpace/fosyma/projet/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/behaviours/ExploMultiBehaviour.java
+/home/ubuntu/WorkSpace/fosyma/projet/dedale-etu/dedale-etu/src/main/java/CustomClass/MessageContainer.java
+/home/ubuntu/WorkSpace/fosyma/projet/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/agents/dummies/DummyMovingAgent.java
+/home/ubuntu/WorkSpace/fosyma/projet/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/princ/Principal.java
+/home/ubuntu/WorkSpace/fosyma/projet/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/behaviours/ExploSoloBehaviour.java
+/home/ubuntu/WorkSpace/fosyma/projet/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/agents/dummies/DummyCollectorAgent.java
+/home/ubuntu/WorkSpace/fosyma/projet/dedale-etu/dedale-etu/src/main/java/eu/su/mas/dedaleEtu/mas/behaviours/SayHello.java
