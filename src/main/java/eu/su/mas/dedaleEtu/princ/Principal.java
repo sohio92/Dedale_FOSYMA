@@ -8,7 +8,7 @@ import java.util.List;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.DummyMovingAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.DummyTankerAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
-
+import eu.su.mas.dedaleEtu.mas.agents.dummies.explo.ExploreCoopAgent;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agents.GateKeeperAgent;
 import eu.su.mas.dedale.mas.agents.dedaleDummyAgents.DummyWumpusShift;
@@ -23,7 +23,7 @@ import jade.wrapper.StaleProxyException;
 import org.junit.Assert;
 import jade.wrapper.AgentContainer;
 
-import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreMultiAgent;
+//import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreMultiAgent;
 
 /**
  * This class is used to start the platform and the agents. 
@@ -318,7 +318,7 @@ public class Principal {
 		
 		//4) Give the class name of your agent to let the system instantiate it
 		//ag=createNewDedaleAgent(c, agentName,DummyMovingAgent.class.getName(), entityParametersExplo1);
-		ag=createNewDedaleAgent(c, agentName, ExploreMultiAgent.class.getName(), entityParametersExplo1);//ExploreSoloAgent
+		ag=createNewDedaleAgent(c, agentName, ExploreCoopAgent.class.getName(), entityParametersExplo1);//ExploreSoloAgent
 		agentList.add(ag);
 		
 //		/*********
@@ -335,7 +335,7 @@ public class Principal {
 		Object [] entityParametersExplo2={"My parameters"};
 //		
 //		//4) Give the class name of your agent to let the system instantiate it
-		ag=createNewDedaleAgent(c, agentName, ExploreMultiAgent.class.getName(), entityParametersExplo2);//ExploreSoloAgent
+		ag=createNewDedaleAgent(c, agentName, ExploreCoopAgent.class.getName(), entityParametersExplo2);//ExploreSoloAgent
 		agentList.add(ag);
 //		
 //		

@@ -2,8 +2,12 @@ package eu.su.mas.dedaleEtu.mas.knowledge;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
@@ -18,14 +22,14 @@ import org.graphstream.ui.view.Viewer;
 import org.graphstream.ui.view.Viewer.CloseFramePolicy;
 
 import dataStructures.serializableGraph.*;
+import dataStructures.tuple.Couple;
 import javafx.application.Platform;
 
 /**
- * <pre>
- * This simple topology representation only deals with the graph, not its content.
- * The knowledge representation is not well written (at all), it is just given as a minimal example.
+ * This simple topology representation only deals with the graph, not its content.</br>
+ * The knowledge representation is not well written (at all), it is just given as a minimal example.</br>
  * The viewer methods are not independent of the data structure, and the dijkstra is recomputed every-time.
- * </pre>
+ * 
  * @author hc
  */
 public class MapRepresentation implements Serializable {
@@ -36,8 +40,9 @@ public class MapRepresentation implements Serializable {
 	 *
 	 */
 
-	public enum MapAttribute {
-		agent,open,closed
+	public enum MapAttribute {	
+		agent,open,closed;
+
 	}
 
 	private static final long serialVersionUID = -1333959882640838272L;
@@ -64,11 +69,9 @@ public class MapRepresentation implements Serializable {
 		this.g= new SingleGraph("My world vision");
 		this.g.setAttribute("ui.stylesheet",nodeStyle);
 
-		try {
-            Platform.runLater(() -> {
-                openGui();
-            });
-        } catch (java.lang.IllegalStateException e) {}
+		Platform.runLater(() -> {
+			openGui();
+		});
 		//this.viewer = this.g.display();
 
 		this.nbEdges=0;
@@ -76,10 +79,10 @@ public class MapRepresentation implements Serializable {
 
 	/**
 	 * Add or replace a node and its attribute 
-	 * @param id Id of the node
-	 * @param mapAttribute associated state of the node
+	 * @param id
+	 * @param mapAttribute
 	 */
-	public void addNode(String id,MapAttribute mapAttribute){
+	public synchronized void addNode(String id,MapAttribute mapAttribute){
 		Node n;
 		if (this.g.getNode(id)==null){
 			n=this.g.addNode(id);
@@ -92,113 +95,47 @@ public class MapRepresentation implements Serializable {
 	}
 
 	/**
-	 * Add the edge if not already existing.
-	 * @param idNode1 one side of the edge
-	 * @param idNode2 the other side of the edge
+	 * Add a node to the graph. Do nothing if the node already exists.
+	 * If new, it is labeled as open (non-visited)
+	 * @param id id of the node
+	 * @return true if added
 	 */
-	public void addEdge(String idNode1,String idNode2){
+	public synchronized boolean addNewNode(String id) {
+		if (this.g.getNode(id)==null){
+			addNode(id,MapAttribute.open);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Add an undirect edge if not already existing.
+	 * @param idNode1
+	 * @param idNode2
+	 */
+	public synchronized void addEdge(String idNode1,String idNode2){
+		this.nbEdges++;
 		try {
-			this.nbEdges++;
 			this.g.addEdge(this.nbEdges.toString(), idNode1, idNode2);
 		}catch (IdAlreadyInUseException e1) {
 			System.err.println("ID existing");
 			System.exit(1);
 		}catch (EdgeRejectedException e2) {
-			//System.err.println("ajout arrete echoué "+e);
 			this.nbEdges--;
 		} catch(ElementNotFoundException e3){
-			
-			
+
 		}
-
-
-
 	}
-	/**
-	 * Fuse two maps together
-	 */
-	public void fuseMap(SerializableSimpleGraph<String, MapAttribute> sg2) {
-		/*for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
-			addNode(n.getNodeId(), n.getNodeContent());
-		}
-		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
-			addNode(n.getNodeId(), n.getNodeContent());
-			for(String s:sg2.getEdges(n.getNodeId())){
-				addEdge(n.getNodeId(),s);
-			}
-		}*/
-		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
-			//System.out.println(n);
-			boolean alreadyIn =false;
-			//1 Add the node
-			Node newnode=null;
-			try {
-				newnode=this.g.addNode(n.getNodeId());
-			}	catch(IdAlreadyInUseException e) {
-				alreadyIn=true;
-				//System.out.println("Already in"+n.getNodeId());
-			}
-			if (!alreadyIn) {
-				newnode.setAttribute("ui.label", newnode.getId());
-				newnode.setAttribute("ui.class", n.getNodeContent().toString());
-			}else{
-				newnode=this.g.getNode(n.getNodeId());
-				//3 check its attribute. If it is below the one received, update it.
-				if (((String) newnode.getAttribute("ui.class"))=="closed" || n.getNodeContent().toString()=="closed") {
-					newnode.setAttribute("ui.class","closed");
-				}
-			}
-		}
 
-		//4 now that all nodes are added, we can add edges
-		//this.g.addNode(n.getNodeId()).setAttribute("ui.class", n.getNodeContent().toString());
-		//We cannot keep the id of the edges has they were choosen independently of the current struct 
-		//Integer nbEd=this.g.getEdgeCount()+1;
-
-		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
-			for(String s:sg2.getEdges(n.getNodeId())){
-				addEdge(n.getNodeId(),s);
-				//				boolean alreadyIn=false;
-				//				try {
-				//				try {
-				//					this.g.addEdge(nbEd.toString(),n.getNodeId(),s);
-				//				}catch(EdgeRejectedException e){
-				//					alreadyIn=true;
-				//				}
-				//				
-				//				}catch (IdAlreadyInUseException e2) {
-				//					System.out.println("Pas normal");
-				//				}
-				//				if (!alreadyIn) nbEd++;
-			}
-		}
-		System.out.println("Merge done");
-	}
-	
-	public SerializableSimpleGraph<String, MapAttribute> getSg(){
-		this.sg= new SerializableSimpleGraph<String,MapAttribute>();
-		Iterator<Node> iter=this.g.iterator();
-		while(iter.hasNext()){
-			Node n=iter.next();
-			sg.addNode(n.getId(),(MapAttribute)n.getAttribute("ui.class"));
-		}
-		Iterator<Edge> iterE=this.g.edges().iterator();
-		while (iterE.hasNext()){
-			Edge e=iterE.next();
-			Node sn=e.getSourceNode();
-			Node tn=e.getTargetNode();
-			sg.addEdge(e.getId(), sn.getId(), tn.getId());
-		}
-		return this.sg;
-	}
 	/**
 	 * Compute the shortest Path from idFrom to IdTo. The computation is currently not very efficient
 	 * 
+	 * 
 	 * @param idFrom id of the origin node
 	 * @param idTo id of the destination node
-	 * @return the list of nodes to follow
+	 * @return the list of nodes to follow, null if the targeted node is not currently reachable
 	 */
-	public List<String> getShortestPath(String idFrom,String idTo){
+	public synchronized List<String> getShortestPath(String idFrom,String idTo){
 		List<String> shortestPath=new ArrayList<String>();
 
 		Dijkstra dijkstra = new Dijkstra();//number of edge
@@ -211,19 +148,60 @@ public class MapRepresentation implements Serializable {
 			shortestPath.add(iter.next().getId());
 		}
 		dijkstra.clear();
-		shortestPath.remove(0);//remove the current position
+		if (shortestPath.isEmpty()) {//The openNode is not currently reachable
+			return null;
+		}else {
+			shortestPath.remove(0);//remove the current position
+		}
 		return shortestPath;
 	}
+
+	public List<String> getShortestPathToClosestOpenNode(String myPosition) {
+		//1) Get all openNodes
+		List<String> opennodes=getOpenNodes();
+
+		//2) select the closest one
+		List<Couple<String,Integer>> lc=
+				opennodes.stream()
+				.map(on -> (getShortestPath(myPosition,on)!=null)? new Couple<String, Integer>(on,getShortestPath(myPosition,on).size()): new Couple<String, Integer>(on,Integer.MAX_VALUE))//some nodes my be unreachable if the agents do not share at least one common node.
+				.collect(Collectors.toList());
+
+		Optional<Couple<String,Integer>> closest=lc.stream().min(Comparator.comparing(Couple::getRight));
+		//3) Compute shorterPath
+
+		return getShortestPath(myPosition,closest.get().getLeft());
+	}
+
+
+
+	public List<String> getOpenNodes(){
+		return this.g.nodes()
+				.filter(x ->x .getAttribute("ui.class")==MapAttribute.open.toString()) 
+				.map(Node::getId)
+				.collect(Collectors.toList());
+	}
+
 
 	/**
 	 * Before the migration we kill all non serializable components and store their data in a serializable form
 	 */
 	public void prepareMigration(){
+		serializeGraphTopology();
+
+		closeGui();
+
+		this.g=null;
+	}
+
+	/**
+	 * Before sending the agent knowledge of the map it should be serialized.
+	 */
+	private void serializeGraphTopology() {
 		this.sg= new SerializableSimpleGraph<String,MapAttribute>();
 		Iterator<Node> iter=this.g.iterator();
 		while(iter.hasNext()){
 			Node n=iter.next();
-			sg.addNode(n.getId(),(MapAttribute)n.getAttribute("ui.class"));
+			sg.addNode(n.getId(),MapAttribute.valueOf((String)n.getAttribute("ui.class")));
 		}
 		Iterator<Edge> iterE=this.g.edges().iterator();
 		while (iterE.hasNext()){
@@ -231,18 +209,19 @@ public class MapRepresentation implements Serializable {
 			Node sn=e.getSourceNode();
 			Node tn=e.getTargetNode();
 			sg.addEdge(e.getId(), sn.getId(), tn.getId());
-		}
+		}	
+	}
 
-		closeGui();
 
-		this.g=null;
-
+	public synchronized SerializableSimpleGraph<String,MapAttribute> getSerializableGraph(){
+		serializeGraphTopology();
+		return this.sg;
 	}
 
 	/**
 	 * After migration we load the serialized data and recreate the non serializable components (Gui,..)
 	 */
-	public void loadSavedData(){
+	public synchronized void loadSavedData(){
 
 		this.g= new SingleGraph("My world vision");
 		this.g.setAttribute("ui.stylesheet",nodeStyle);
@@ -263,14 +242,16 @@ public class MapRepresentation implements Serializable {
 	/**
 	 * Method called before migration to kill all non serializable graphStream components
 	 */
-	private void closeGui() {
+	private synchronized void closeGui() {
 		//once the graph is saved, clear non serializable components
 		if (this.viewer!=null){
+			//Platform.runLater(() -> {
 			try{
 				this.viewer.close();
 			}catch(NullPointerException e){
 				System.err.println("Bug graphstream viewer.close() work-around - https://github.com/graphstream/gs-core/issues/150");
 			}
+			//});
 			this.viewer=null;
 		}
 	}
@@ -278,11 +259,62 @@ public class MapRepresentation implements Serializable {
 	/**
 	 * Method called after a migration to reopen GUI components
 	 */
-	private void openGui() {
-		this.viewer =new FxViewer(this.g, FxViewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);////GRAPH_IN_GUI_THREAD);
+	private synchronized void openGui() {
+		this.viewer =new FxViewer(this.g, FxViewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);//GRAPH_IN_GUI_THREAD)
 		viewer.enableAutoLayout();
 		viewer.setCloseFramePolicy(FxViewer.CloseFramePolicy.CLOSE_VIEWER);
 		viewer.addDefaultView(true);
+
 		g.display();
 	}
+
+	public void mergeMap(SerializableSimpleGraph<String, MapAttribute> sgreceived) {
+		//System.out.println("You should decide what you want to save and how");
+		//System.out.println("We currently blindy add the topology");
+
+		for (SerializableNode<String, MapAttribute> n: sgreceived.getAllNodes()){
+			//System.out.println(n);
+			boolean alreadyIn =false;
+			//1 Add the node
+			Node newnode=null;
+			try {
+				newnode=this.g.addNode(n.getNodeId());
+			}	catch(IdAlreadyInUseException e) {
+				alreadyIn=true;
+				//System.out.println("Already in"+n.getNodeId());
+			}
+			if (!alreadyIn) {
+				newnode.setAttribute("ui.label", newnode.getId());
+				newnode.setAttribute("ui.class", n.getNodeContent().toString());
+			}else{
+				newnode=this.g.getNode(n.getNodeId());
+				//3 check its attribute. If it is below the one received, update it.
+				if (((String) newnode.getAttribute("ui.class"))==MapAttribute.closed.toString() || n.getNodeContent().toString()==MapAttribute.closed.toString()) {
+					newnode.setAttribute("ui.class",MapAttribute.closed.toString());
+				}
+			}
+		}
+
+		//4 now that all nodes are added, we can add edges
+		for (SerializableNode<String, MapAttribute> n: sgreceived.getAllNodes()){
+			for(String s:sgreceived.getEdges(n.getNodeId())){
+				addEdge(n.getNodeId(),s);
+			}
+		}
+		//System.out.println("Merge done");
+	}
+
+	/**
+	 * 
+	 * @return true if there exist at least one openNode on the graph 
+	 */
+	public boolean hasOpenNode() {
+		return (this.g.nodes()
+				.filter(n -> n.getAttribute("ui.class")==MapAttribute.open.toString())
+				.findAny()).isPresent();
+	}
+
+
+
+
 }
