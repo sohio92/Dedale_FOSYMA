@@ -8,7 +8,9 @@ import java.util.List;
 import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.EdgeRejectedException;
+import org.graphstream.graph.ElementNotFoundException;
 import org.graphstream.graph.Graph;
+import org.graphstream.graph.IdAlreadyInUseException;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.fx_viewer.FxViewer;
@@ -98,25 +100,79 @@ public class MapRepresentation implements Serializable {
 		try {
 			this.nbEdges++;
 			this.g.addEdge(this.nbEdges.toString(), idNode1, idNode2);
-		}catch (EdgeRejectedException e){
-			//Do not add an already existing one
+		}catch (IdAlreadyInUseException e1) {
+			System.err.println("ID existing");
+			System.exit(1);
+		}catch (EdgeRejectedException e2) {
+			//System.err.println("ajout arrete echoué "+e);
 			this.nbEdges--;
+		} catch(ElementNotFoundException e3){
+			
+			
 		}
+
+
 
 	}
 	/**
 	 * Fuse two maps together
 	 */
 	public void fuseMap(SerializableSimpleGraph<String, MapAttribute> sg2) {
-		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
+		/*for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
 			addNode(n.getNodeId(), n.getNodeContent());
 		}
-		for (SerializableNode<String, MapAttribute> n: this.getSg().getAllNodes()){
+		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
 			addNode(n.getNodeId(), n.getNodeContent());
 			for(String s:sg2.getEdges(n.getNodeId())){
 				addEdge(n.getNodeId(),s);
 			}
+		}*/
+		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
+			//System.out.println(n);
+			boolean alreadyIn =false;
+			//1 Add the node
+			Node newnode=null;
+			try {
+				newnode=this.g.addNode(n.getNodeId());
+			}	catch(IdAlreadyInUseException e) {
+				alreadyIn=true;
+				//System.out.println("Already in"+n.getNodeId());
+			}
+			if (!alreadyIn) {
+				newnode.setAttribute("ui.label", newnode.getId());
+				newnode.setAttribute("ui.class", n.getNodeContent().toString());
+			}else{
+				newnode=this.g.getNode(n.getNodeId());
+				//3 check its attribute. If it is below the one received, update it.
+				if (((String) newnode.getAttribute("ui.class"))=="closed" || n.getNodeContent().toString()=="closed") {
+					newnode.setAttribute("ui.class","closed");
+				}
+			}
 		}
+
+		//4 now that all nodes are added, we can add edges
+		//this.g.addNode(n.getNodeId()).setAttribute("ui.class", n.getNodeContent().toString());
+		//We cannot keep the id of the edges has they were choosen independently of the current struct 
+		//Integer nbEd=this.g.getEdgeCount()+1;
+
+		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
+			for(String s:sg2.getEdges(n.getNodeId())){
+				addEdge(n.getNodeId(),s);
+				//				boolean alreadyIn=false;
+				//				try {
+				//				try {
+				//					this.g.addEdge(nbEd.toString(),n.getNodeId(),s);
+				//				}catch(EdgeRejectedException e){
+				//					alreadyIn=true;
+				//				}
+				//				
+				//				}catch (IdAlreadyInUseException e2) {
+				//					System.out.println("Pas normal");
+				//				}
+				//				if (!alreadyIn) nbEd++;
+			}
+		}
+		System.out.println("Merge done");
 	}
 	
 	public SerializableSimpleGraph<String, MapAttribute> getSg(){

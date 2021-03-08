@@ -55,7 +55,7 @@ public class ShareMap extends TickerBehaviour{
 	@Override
 	public void onTick() {
 		if(myMap==null) {
-			this.myMap= new MapRepresentation();
+			myMap= new MapRepresentation();
 		}
 		
 		this.contenu.updateSg(this.myMap.getSg());
