@@ -63,12 +63,14 @@ public class MapRepresentation implements Serializable {
 		System.setProperty("org.graphstream.ui", "javafx");
 		this.g= new SingleGraph("My world vision");
 		this.g.setAttribute("ui.stylesheet",nodeStyle);
+		
+		this.sg = new SerializableSimpleGraph<String,MapAttribute>();
 
-		try {
-            Platform.runLater(() -> {
-                openGui();
-            });
-        } catch (java.lang.IllegalStateException e) {}
+		//try {
+        //    Platform.runLater(() -> {
+        //        openGui();
+        //    });
+        //} catch (java.lang.IllegalStateException e) {}
 		//this.viewer = this.g.display();
 
 		this.nbEdges=0;
@@ -89,6 +91,8 @@ public class MapRepresentation implements Serializable {
 		n.clearAttributes();
 		n.setAttribute("ui.class", mapAttribute.toString());
 		n.setAttribute("ui.label",id);
+		
+		this.sg.addNode(n.getId(), mapAttribute);
 	}
 
 	/**
@@ -100,6 +104,7 @@ public class MapRepresentation implements Serializable {
 		try {
 			this.nbEdges++;
 			this.g.addEdge(this.nbEdges.toString(), idNode1, idNode2);
+			this.sg.addEdge(this.nbEdges.toString(), idNode1, idNode2);
 		}catch (IdAlreadyInUseException e1) {
 			System.err.println("ID existing");
 			System.exit(1);
@@ -118,36 +123,9 @@ public class MapRepresentation implements Serializable {
 	 * Fuse two maps together
 	 */
 	public void fuseMap(SerializableSimpleGraph<String, MapAttribute> sg2) {
-		/*for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
-			addNode(n.getNodeId(), n.getNodeContent());
-		}
+
 		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
-			addNode(n.getNodeId(), n.getNodeContent());
-			for(String s:sg2.getEdges(n.getNodeId())){
-				addEdge(n.getNodeId(),s);
-			}
-		}*/
-		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
-			//System.out.println(n);
-			boolean alreadyIn =false;
-			//1 Add the node
-			Node newnode=null;
-			try {
-				newnode=this.g.addNode(n.getNodeId());
-			}	catch(IdAlreadyInUseException e) {
-				alreadyIn=true;
-				//System.out.println("Already in"+n.getNodeId());
-			}
-			if (!alreadyIn) {
-				newnode.setAttribute("ui.label", newnode.getId());
-				newnode.setAttribute("ui.class", n.getNodeContent().toString());
-			}else{
-				newnode=this.g.getNode(n.getNodeId());
-				//3 check its attribute. If it is below the one received, update it.
-				if (((String) newnode.getAttribute("ui.class"))=="closed" || n.getNodeContent().toString()=="closed") {
-					newnode.setAttribute("ui.class","closed");
-				}
-			}
+			this.addNode(n.getNodeId(), n.getNodeContent());	
 		}
 
 		//4 now that all nodes are added, we can add edges
@@ -157,7 +135,7 @@ public class MapRepresentation implements Serializable {
 
 		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
 			for(String s:sg2.getEdges(n.getNodeId())){
-				addEdge(n.getNodeId(),s);
+				this.addEdge(n.getNodeId(),s);
 				//				boolean alreadyIn=false;
 				//				try {
 				//				try {
@@ -176,19 +154,7 @@ public class MapRepresentation implements Serializable {
 	}
 	
 	public SerializableSimpleGraph<String, MapAttribute> getSg(){
-		this.sg= new SerializableSimpleGraph<String,MapAttribute>();
-		Iterator<Node> iter=this.g.iterator();
-		while(iter.hasNext()){
-			Node n=iter.next();
-			sg.addNode(n.getId(),(MapAttribute)n.getAttribute("ui.class"));
-		}
-		Iterator<Edge> iterE=this.g.edges().iterator();
-		while (iterE.hasNext()){
-			Edge e=iterE.next();
-			Node sn=e.getSourceNode();
-			Node tn=e.getTargetNode();
-			sg.addEdge(e.getId(), sn.getId(), tn.getId());
-		}
+		System.out.println("Get SG : " + this.sg.getAllNodes());
 		return this.sg;
 	}
 	/**
@@ -278,6 +244,10 @@ public class MapRepresentation implements Serializable {
 	/**
 	 * Method called after a migration to reopen GUI components
 	 */
+	public void testGui() {
+		if (this.viewer==null)
+			openGui();
+	}
 	private void openGui() {
 		this.viewer =new FxViewer(this.g, FxViewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);////GRAPH_IN_GUI_THREAD);
 		viewer.enableAutoLayout();

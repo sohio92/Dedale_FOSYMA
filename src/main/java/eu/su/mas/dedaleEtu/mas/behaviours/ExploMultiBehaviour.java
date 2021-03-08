@@ -69,8 +69,10 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 	@Override
 	public void action() {
 
-		if(this.myMap==null)
+		if(this.myMap==null) {
 			this.myMap= new MapRepresentation();
+			this.myMap.testGui();
+		}
 		
 		//0) Retrieve the current position
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
@@ -106,22 +108,23 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 				ArrayList<String> receivedOpen = contenu.getOpen();
 				HashSet<String> receivedClosed = contenu.getClosed();
 				String receivedIntentions = contenu.getIntention();
-				
+
 				// Update the agent's map by mixing the two together
 				this.myMap.fuseMap(receivedSg);
 				System.out.println("Fused MAP : "+((AbstractDedaleAgent)this.myAgent).getLocalName());
-				
+				System.out.println(((AbstractDedaleAgent)this.myAgent).getLocalName() + " received SG : " + receivedSg.getAllNodes());
+
 				// Update our nodes
-				receivedOpen.removeAll(this.closedNodes);
-				this.openNodes.removeAll(receivedClosed);
+				//receivedOpen.removeAll(this.closedNodes);
+				//this.openNodes.removeAll(receivedClosed);
 				
-				this.openNodes.addAll(receivedOpen);
-				this.closedNodes.addAll(receivedClosed);
+				//this.openNodes.addAll(receivedOpen);
+				//this.closedNodes.addAll(receivedClosed);
 				
 				// We yield an explorable node to the agent
-				this.openNodes.remove(receivedIntentions);
-				this.closedNodes.add(receivedIntentions);
-				this.abandonedNodes.add(receivedIntentions);
+//				this.openNodes.remove(receivedIntentions);
+//				this.closedNodes.add(receivedIntentions);
+//				this.abandonedNodes.add(receivedIntentions);
 			}
 
 			//1) remove the current node from openlist and add it to closedNodes.
@@ -173,7 +176,7 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 
 				//list of observations associated to the currentPosition
 				List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
-				System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);
+				//System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);
 				
 				((ExploreMultiAgent)this.myAgent).setIntention(nextNode);
 				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
