@@ -95,6 +95,19 @@ public class MapRepresentation implements Serializable {
 		
 		this.sg.addNode(n.getId(), mapAttribute);
 	}
+	
+	public void updateNode(String id,MapAttribute mapAttribute){
+		Node n;
+		if (this.g.getNode(id)==null){
+			n=this.g.addNode(id);
+			n.clearAttributes();
+			n.setAttribute("ui.class", mapAttribute.toString());
+			n.setAttribute("ui.label",id);
+		}else{
+			n=this.g.getNode(id);
+		}		
+		this.sg.addNode(n.getId(), mapAttribute);
+	}
 
 	/**
 	 * Add the edge if not already existing.
@@ -126,7 +139,7 @@ public class MapRepresentation implements Serializable {
 	public void fuseMap(SerializableSimpleGraph<String, MapAttribute> sg2) {
 
 		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
-			this.addNode(n.getNodeId(), n.getNodeContent());	
+			this.updateNode(n.getNodeId(), n.getNodeContent());	
 		}
 
 		//4 now that all nodes are added, we can add edges
