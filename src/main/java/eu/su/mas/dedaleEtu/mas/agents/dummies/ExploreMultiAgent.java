@@ -50,7 +50,8 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		 * ADD the initial behaviours of the Agent here
 		 * 
 		 ************************************************/
-		
+		this.myMap = new MapRepresentation();
+		this.myMap.prepareMigration();
 		lb.add(new ExploMultiBehaviour(this,this.myMap, this.openNodes, this.closedNodes));
 		lb.add(new ShareMap(this, this.myMap, this.openNodes, this.closedNodes));
 		

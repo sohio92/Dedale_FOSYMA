@@ -69,9 +69,8 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 	@Override
 	public void action() {
 
-		if(this.myMap==null) {
-			this.myMap= new MapRepresentation();
-			this.myMap.testGui();
+		if(this.myMap.getMigration()==true) {
+			this.myMap.loadSavedData();
 		}
 		
 		//0) Retrieve the current position
@@ -112,8 +111,8 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 				// Update the agent's map by mixing the two together
 				this.myMap.fuseMap(receivedSg);
 				System.out.println("Fused MAP : "+((AbstractDedaleAgent)this.myAgent).getLocalName());
-				System.out.println(((AbstractDedaleAgent)this.myAgent).getLocalName() + " received SG : " + receivedSg.getAllNodes());
-
+				System.out.println(((AbstractDedaleAgent)this.myAgent).getLocalName() + this.myMap.getSg().getAllNodes());
+				System.out.println(((AbstractDedaleAgent)this.myAgent).getLocalName() + receivedSg.getAllNodes());
 				// Update our nodes
 				//receivedOpen.removeAll(this.closedNodes);
 				//this.openNodes.removeAll(receivedClosed);

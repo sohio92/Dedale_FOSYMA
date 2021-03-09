@@ -56,6 +56,7 @@ public class MapRepresentation implements Serializable {
 	private Integer nbEdges;//used to generate the edges ids
 
 	private SerializableSimpleGraph<String, MapAttribute> sg;//used as a temporary dataStructure during migration
+	private Boolean isMigrating = false;
 
 
 	public MapRepresentation() {
@@ -154,7 +155,6 @@ public class MapRepresentation implements Serializable {
 	}
 	
 	public SerializableSimpleGraph<String, MapAttribute> getSg(){
-		System.out.println("Get SG : " + this.sg.getAllNodes());
 		return this.sg;
 	}
 	/**
@@ -202,6 +202,7 @@ public class MapRepresentation implements Serializable {
 		closeGui();
 
 		this.g=null;
+		this.isMigrating = true;
 
 	}
 
@@ -224,6 +225,7 @@ public class MapRepresentation implements Serializable {
 			}
 		}
 		System.out.println("Loading done");
+		this.isMigrating = false;
 	}
 
 	/**
@@ -254,5 +256,9 @@ public class MapRepresentation implements Serializable {
 		viewer.setCloseFramePolicy(FxViewer.CloseFramePolicy.CLOSE_VIEWER);
 		viewer.addDefaultView(true);
 		g.display();
+	}
+	
+	public Boolean getMigration() {
+		return this.isMigrating;
 	}
 }

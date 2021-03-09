@@ -53,11 +53,7 @@ public class ShareMap extends TickerBehaviour{
 	}
 
 	@Override
-	public void onTick() {
-		if(myMap==null) {
-			myMap= new MapRepresentation();
-		}
-		
+	public void onTick() {		
 		this.contenu.updateSg(this.myMap.getSg());
 		
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
