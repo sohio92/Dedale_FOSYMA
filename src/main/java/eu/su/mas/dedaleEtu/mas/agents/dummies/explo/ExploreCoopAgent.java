@@ -8,8 +8,11 @@ import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploCoopBehaviour;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
-
+import jade.core.AID;
 import jade.core.behaviours.Behaviour;
+import jade.domain.AMSService;
+import jade.domain.FIPAAgentManagement.AMSAgentDescription;
+import jade.domain.FIPAAgentManagement.SearchConstraints;
 
 /**
  * <pre>
@@ -49,9 +52,11 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 		
 		final Object[] args = getArguments();
 		
-		List<String> list_agentNames=new ArrayList<String>();
+		/*List<String> list_agentNames=new ArrayList<String>();
 		list_agentNames.add("Explo1");
-		list_agentNames.add("Explo2");
+		list_agentNames.add("Explo2");*/
+		List<String> list_agentNames = getAgentsList();
+		
 		
 		
 		
@@ -85,8 +90,32 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 		
 		addBehaviour(new startMyBehaviours(this,lb));
 		
-		System.out.println("the  agent "+this.getLocalName()+ " is started");
+		System.out.println("the  agent "+this.getLocalName() + " is started");
 
+	}
+	
+	/**
+	*
+	* @return The list of the ( local )names of the agents currently within the platform
+	*/
+	private List <String> getAgentsList(){
+		AMSAgentDescription[] agentsDescriptionCatalog = null;
+		List <String> agentsNames= new ArrayList<String>();
+		try {
+			SearchConstraints c = new SearchConstraints();
+			c.setMaxResults(new Long(-1));
+			agentsDescriptionCatalog = AMSService.search(this, new
+					AMSAgentDescription(), c);
+		}
+		catch (Exception e) {
+			System.out.println("Problem searching AMS: " + e );
+			e.printStackTrace();
+		}
+		for (int i=0; i<agentsDescriptionCatalog.length; i++){
+			AID agentID = agentsDescriptionCatalog[i].getName();
+			agentsNames.add(agentID.getLocalName());
+		}
+		return agentsNames;
 	}
 	
 	
