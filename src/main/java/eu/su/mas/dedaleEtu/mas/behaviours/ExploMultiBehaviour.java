@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import dataStructures.serializableGraph.SerializableNode;
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
@@ -111,14 +112,12 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 				// Update the agent's map by mixing the two together
 				this.myMap.fuseMap(receivedSg);
 				System.out.println("Fused MAP : "+((AbstractDedaleAgent)this.myAgent).getLocalName());
-				System.out.println(((AbstractDedaleAgent)this.myAgent).getLocalName() + this.myMap.getSg().getAllNodes());
-				System.out.println(((AbstractDedaleAgent)this.myAgent).getLocalName() + receivedSg.getAllNodes());
-				// Update our nodes
-				//receivedOpen.removeAll(this.closedNodes);
-				//this.openNodes.removeAll(receivedClosed);
+
+				receivedOpen.removeAll(this.closedNodes);
+				this.openNodes.removeAll(receivedClosed);
 				
-				//this.openNodes.addAll(receivedOpen);
-				//this.closedNodes.addAll(receivedClosed);
+				this.openNodes.addAll(receivedOpen);
+				this.closedNodes.addAll(receivedClosed);
 				
 				// We yield an explorable node to the agent
 //				this.openNodes.remove(receivedIntentions);
