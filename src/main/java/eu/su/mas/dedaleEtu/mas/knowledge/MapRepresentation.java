@@ -151,7 +151,7 @@ public class MapRepresentation implements Serializable {
 				//				if (!alreadyIn) nbEd++;
 			}
 		}
-		System.out.println("Merge done");
+//		System.out.println("Merge done");
 	}
 	
 	public SerializableSimpleGraph<String, MapAttribute> getSg(){
