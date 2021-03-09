@@ -98,15 +98,21 @@ public class MapRepresentation implements Serializable {
 	
 	public void updateNode(String id,MapAttribute mapAttribute){
 		Node n;
+		
 		if (this.g.getNode(id)==null){
-			n=this.g.addNode(id);
-			n.clearAttributes();
-			n.setAttribute("ui.class", mapAttribute.toString());
-			n.setAttribute("ui.label",id);
+			this.addNode(id, mapAttribute);
 		}else{
 			n=this.g.getNode(id);
-		}		
-		this.sg.addNode(n.getId(), mapAttribute);
+
+			if (mapAttribute != null) {
+				if (mapAttribute.toString() == MapAttribute.closed.toString() || mapAttribute.toString() == MapAttribute.agent.toString()) {
+					n.clearAttributes();
+					n.setAttribute("ui.class", mapAttribute.toString());
+					this.sg.addNode(n.getId(), mapAttribute);
+					n.setAttribute("ui.label",id);
+				}
+			}
+		}
 	}
 
 	/**
@@ -127,11 +133,7 @@ public class MapRepresentation implements Serializable {
 			this.nbEdges--;
 		} catch(ElementNotFoundException e3){
 			
-			
 		}
-
-
-
 	}
 	/**
 	 * Fuse two maps together
@@ -168,6 +170,19 @@ public class MapRepresentation implements Serializable {
 	}
 	
 	public SerializableSimpleGraph<String, MapAttribute> getSg(){
+		this.sg= new SerializableSimpleGraph<String,MapAttribute>();
+        Iterator<Node> iter=this.g.iterator();
+        while(iter.hasNext()){
+            Node n=iter.next();
+            sg.addNode(n.getId(),MapAttribute.valueOf((String)n.getAttribute("ui.class")));
+        }
+        Iterator<Edge> iterE=this.g.edges().iterator();
+        while (iterE.hasNext()){
+            Edge e=iterE.next();
+            Node sn=e.getSourceNode();
+            Node tn=e.getTargetNode();
+            sg.addEdge(e.getId(), sn.getId(), tn.getId());
+        } 
 		return this.sg;
 	}
 	/**

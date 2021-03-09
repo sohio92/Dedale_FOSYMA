@@ -120,9 +120,9 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 				this.closedNodes.addAll(receivedClosed);
 				
 				// We yield an explorable node to the agent
-//				this.openNodes.remove(receivedIntentions);
-//				this.closedNodes.add(receivedIntentions);
-//				this.abandonedNodes.add(receivedIntentions);
+				this.openNodes.remove(receivedIntentions);
+				this.closedNodes.add(receivedIntentions);
+				this.abandonedNodes.add(receivedIntentions);
 			}
 
 			//1) remove the current node from openlist and add it to closedNodes.
@@ -169,7 +169,12 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 				if (nextNode==null){
 					//no directly accessible openNode
 					//chose one, compute the path and take the first step.
-					nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
+					try {
+						nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
+					} catch(java.lang.IndexOutOfBoundsException e){
+						
+					}
+					
 				}
 
 				//list of observations associated to the currentPosition
