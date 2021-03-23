@@ -9,7 +9,11 @@ import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploMultiBehaviour;
 import eu.su.mas.dedaleEtu.mas.behaviours.ShareMap;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
+import jade.core.AID;
 import jade.core.behaviours.Behaviour;
+import jade.domain.AMSService;
+import jade.domain.FIPAAgentManagement.AMSAgentDescription;
+import jade.domain.FIPAAgentManagement.SearchConstraints;
 
 /**
  * <pre>
@@ -42,7 +46,12 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 
 		super.setup();
 		
-
+			
+	    /**
+	     * Get the other agents' names
+	     */
+		List<String> agentNames = getAgentsList();
+		
 		List<Behaviour> lb=new ArrayList<Behaviour>();
 		
 		/************************************************
@@ -53,7 +62,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		this.myMap = new MapRepresentation();
 		this.myMap.prepareMigration();
 		lb.add(new ExploMultiBehaviour(this,this.myMap, this.openNodes, this.closedNodes));
-		lb.add(new ShareMap(this, this.myMap, this.openNodes, this.closedNodes));
+		lb.add(new ShareMap(this, this.myMap, this.openNodes, this.closedNodes, agentNames));
 		
 		
 		/***
@@ -65,6 +74,26 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		
 		System.out.println("the  agent "+this.getLocalName()+ " is started");
 
+	}
+	
+	private List <String> getAgentsList(){
+		AMSAgentDescription[] agentsDescriptionCatalog = null;
+		List <String> agentsNames= new ArrayList<String>();
+		try {
+			SearchConstraints c = new SearchConstraints();
+			c.setMaxResults(new Long(-1));
+			agentsDescriptionCatalog = AMSService.search(this, new
+					AMSAgentDescription(), c);
+		}
+		catch (Exception e) {
+			System.out.println("Problem searching AMS: " + e );
+			e.printStackTrace();
+		}
+		for (int i=0; i<agentsDescriptionCatalog.length; i++){
+			AID agentID = agentsDescriptionCatalog[i].getName();
+			agentsNames.add(agentID.getLocalName());
+		}
+		return agentsNames;
 	}
 	
 	public String getIntention() {
