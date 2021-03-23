@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import dataStructures.serializableGraph.SerializableNode;
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
@@ -69,8 +70,9 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 	@Override
 	public void action() {
 
-		if(this.myMap==null)
-			this.myMap= new MapRepresentation();
+		if(this.myMap.getMigration()==true) {
+			this.myMap.loadSavedData();
+		}
 		
 		//0) Retrieve the current position
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
@@ -106,11 +108,11 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 				ArrayList<String> receivedOpen = contenu.getOpen();
 				HashSet<String> receivedClosed = contenu.getClosed();
 				String receivedIntentions = contenu.getIntention();
-				
+
 				// Update the agent's map by mixing the two together
 				this.myMap.fuseMap(receivedSg);
-				
-				// Update our nodes
+				System.out.println("Fused MAP : "+((AbstractDedaleAgent)this.myAgent).getLocalName());
+
 				receivedOpen.removeAll(this.closedNodes);
 				this.openNodes.removeAll(receivedClosed);
 				
@@ -167,12 +169,17 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 				if (nextNode==null){
 					//no directly accessible openNode
 					//chose one, compute the path and take the first step.
-					nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
+					try {
+						nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
+					} catch(java.lang.IndexOutOfBoundsException e){
+						
+					}
+					
 				}
 
 				//list of observations associated to the currentPosition
 				List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
-				System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);
+				//System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);
 				
 				((ExploreMultiAgent)this.myAgent).setIntention(nextNode);
 				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);

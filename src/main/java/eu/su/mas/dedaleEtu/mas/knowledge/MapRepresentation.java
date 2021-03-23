@@ -8,7 +8,9 @@ import java.util.List;
 import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.EdgeRejectedException;
+import org.graphstream.graph.ElementNotFoundException;
 import org.graphstream.graph.Graph;
+import org.graphstream.graph.IdAlreadyInUseException;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.fx_viewer.FxViewer;
@@ -54,6 +56,7 @@ public class MapRepresentation implements Serializable {
 	private Integer nbEdges;//used to generate the edges ids
 
 	private SerializableSimpleGraph<String, MapAttribute> sg;//used as a temporary dataStructure during migration
+	private Boolean isMigrating = false;
 
 
 	public MapRepresentation() {
@@ -61,12 +64,14 @@ public class MapRepresentation implements Serializable {
 		System.setProperty("org.graphstream.ui", "javafx");
 		this.g= new SingleGraph("My world vision");
 		this.g.setAttribute("ui.stylesheet",nodeStyle);
+		
+		this.sg = new SerializableSimpleGraph<String,MapAttribute>();
 
-		try {
-            Platform.runLater(() -> {
-                openGui();
-            });
-        } catch (java.lang.IllegalStateException e) {}
+		//try {
+        //    Platform.runLater(() -> {
+        //        openGui();
+        //    });
+        //} catch (java.lang.IllegalStateException e) {}
 		//this.viewer = this.g.display();
 
 		this.nbEdges=0;
@@ -87,6 +92,27 @@ public class MapRepresentation implements Serializable {
 		n.clearAttributes();
 		n.setAttribute("ui.class", mapAttribute.toString());
 		n.setAttribute("ui.label",id);
+		
+		this.sg.addNode(n.getId(), mapAttribute);
+	}
+	
+	public void updateNode(String id,MapAttribute mapAttribute){
+		Node n;
+		
+		if (this.g.getNode(id)==null){
+			this.addNode(id, mapAttribute);
+		}else{
+			n=this.g.getNode(id);
+
+			if (mapAttribute != null) {
+				if (mapAttribute.toString() == MapAttribute.closed.toString() || mapAttribute.toString() == MapAttribute.agent.toString()) {
+					n.clearAttributes();
+					n.setAttribute("ui.class", mapAttribute.toString());
+					this.sg.addNode(n.getId(), mapAttribute);
+					n.setAttribute("ui.label",id);
+				}
+			}
+		}
 	}
 
 	/**
@@ -98,40 +124,65 @@ public class MapRepresentation implements Serializable {
 		try {
 			this.nbEdges++;
 			this.g.addEdge(this.nbEdges.toString(), idNode1, idNode2);
-		}catch (EdgeRejectedException e){
-			//Do not add an already existing one
+			this.sg.addEdge(this.nbEdges.toString(), idNode1, idNode2);
+		}catch (IdAlreadyInUseException e1) {
+			System.err.println("ID existing");
+			System.exit(1);
+		}catch (EdgeRejectedException e2) {
+			//System.err.println("ajout arrete echoué "+e);
 			this.nbEdges--;
+		} catch(ElementNotFoundException e3){
+			
 		}
-
 	}
 	/**
 	 * Fuse two maps together
 	 */
 	public void fuseMap(SerializableSimpleGraph<String, MapAttribute> sg2) {
-		System.out.println("\\n\\n\\n\\n\\n\\n\\n\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n");
+
 		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
-			addNode(n.getNodeId(), n.getNodeContent());
+			this.updateNode(n.getNodeId(), n.getNodeContent());	
+		}
+
+		//4 now that all nodes are added, we can add edges
+		//this.g.addNode(n.getNodeId()).setAttribute("ui.class", n.getNodeContent().toString());
+		//We cannot keep the id of the edges has they were choosen independently of the current struct 
+		//Integer nbEd=this.g.getEdgeCount()+1;
+
+		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
 			for(String s:sg2.getEdges(n.getNodeId())){
-				addEdge(n.getNodeId(),s);
+				this.addEdge(n.getNodeId(),s);
+				//				boolean alreadyIn=false;
+				//				try {
+				//				try {
+				//					this.g.addEdge(nbEd.toString(),n.getNodeId(),s);
+				//				}catch(EdgeRejectedException e){
+				//					alreadyIn=true;
+				//				}
+				//				
+				//				}catch (IdAlreadyInUseException e2) {
+				//					System.out.println("Pas normal");
+				//				}
+				//				if (!alreadyIn) nbEd++;
 			}
 		}
-		System.out.println("FUSE done");
+//		System.out.println("Merge done");
 	}
 	
 	public SerializableSimpleGraph<String, MapAttribute> getSg(){
 		this.sg= new SerializableSimpleGraph<String,MapAttribute>();
-		Iterator<Node> iter=this.g.iterator();
-		while(iter.hasNext()){
-			Node n=iter.next();
-			sg.addNode(n.getId(),(MapAttribute)n.getAttribute("ui.class"));
-		}
-		Iterator<Edge> iterE=this.g.edges().iterator();
-		while (iterE.hasNext()){
-			Edge e=iterE.next();
-			Node sn=e.getSourceNode();
-			Node tn=e.getTargetNode();
-			sg.addEdge(e.getId(), sn.getId(), tn.getId());
-		}
+        Iterator<Node> iter=this.g.iterator();
+        while(iter.hasNext()){
+            Node n=iter.next();
+            sg.addNode(n.getId(),MapAttribute.valueOf((String)n.getAttribute("ui.class")));
+        }
+        Iterator<Edge> iterE=this.g.edges().iterator();
+        while (iterE.hasNext()){
+            Edge e=iterE.next();
+            Node sn=e.getSourceNode();
+            Node tn=e.getTargetNode();
+            sg.addEdge(e.getId(), sn.getId(), tn.getId());
+        } 
 		return this.sg;
 	}
 	/**
@@ -179,6 +230,7 @@ public class MapRepresentation implements Serializable {
 		closeGui();
 
 		this.g=null;
+		this.isMigrating = true;
 
 	}
 
@@ -201,6 +253,7 @@ public class MapRepresentation implements Serializable {
 			}
 		}
 		System.out.println("Loading done");
+		this.isMigrating = false;
 	}
 
 	/**
@@ -221,11 +274,19 @@ public class MapRepresentation implements Serializable {
 	/**
 	 * Method called after a migration to reopen GUI components
 	 */
+	public void testGui() {
+		if (this.viewer==null)
+			openGui();
+	}
 	private void openGui() {
 		this.viewer =new FxViewer(this.g, FxViewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);////GRAPH_IN_GUI_THREAD);
 		viewer.enableAutoLayout();
 		viewer.setCloseFramePolicy(FxViewer.CloseFramePolicy.CLOSE_VIEWER);
 		viewer.addDefaultView(true);
 		g.display();
+	}
+	
+	public Boolean getMigration() {
+		return this.isMigrating;
 	}
 }
