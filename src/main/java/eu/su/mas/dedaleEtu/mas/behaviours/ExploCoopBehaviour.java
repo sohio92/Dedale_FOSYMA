@@ -21,6 +21,10 @@ import eu.su.mas.dedaleEtu.mas.behaviours.ShareMapBehaviour;
 import jade.core.AID;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.SimpleBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
@@ -63,7 +67,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 		super(myagent);
 		this.myMap=myMap;
 		this.list_agentNames=agentNames;
-		
+		add_yellow_page("Not_Explo");
 		
 	}
 
@@ -110,6 +114,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 			//3) while openNodes is not empty, continues.
 			if (!this.myMap.hasOpenNode()){
 				//Explo finished
+				remove_yellow_page();
 				finished=true;
 				System.out.println(this.myAgent.getLocalName()+" - Exploration successufully done, behaviour removed.");
 			}else{
@@ -170,5 +175,28 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 	public boolean done() {
 		return finished;
 	}
+	
+	
+	
+	void add_yellow_page(String service){
+		DFAgentDescription dfd = new DFAgentDescription();
+		dfd .setName(this.myAgent.getAID()); // The agent AID
+		ServiceDescription sd = new
+				ServiceDescription () ;
+		sd.setType(service); // You have to give a name to each service your agent offers
+		sd.setName(this.myAgent.getLocalName());//(local)name of the agent
+		dfd.addServices(sd) ;
+		//Register the service
+		try {
+			DFService.register(this.myAgent, dfd);
+		} catch (FIPAException fe) {
+			fe . printStackTrace () ; }
+	}
+	
+	void remove_yellow_page(){
+		 try { DFService.deregister(this.myAgent); }
+         catch (Exception e) {}
+	}
 
 }
+

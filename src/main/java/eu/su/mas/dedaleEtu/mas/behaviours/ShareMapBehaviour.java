@@ -1,6 +1,7 @@
 package eu.su.mas.dedaleEtu.mas.behaviours;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import dataStructures.serializableGraph.SerializableSimpleGraph;
@@ -12,6 +13,10 @@ import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.TickerBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 
 /**
@@ -52,7 +57,14 @@ public class ShareMapBehaviour extends TickerBehaviour{
 	protected void onTick() {
 		//4) At each time step, the agent blindly send all its graph to its surrounding to illustrate how to share its knowledge (the topology currently) with the the others agents. 	
 		// If it was written properly, this sharing action should be in a dedicated behaviour set, the receivers be automatically computed, and only a subgraph would be shared.
-		
+		try {
+			if (list_of_agent("Not_Explo").size() == 0){
+				System.out.println("YOUPIIIIIIII");
+			}
+		} catch (FIPAException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
 		msg.setProtocol("SHARE-TOPO");
 		msg.setSender(this.myAgent.getAID());
@@ -70,5 +82,27 @@ public class ShareMapBehaviour extends TickerBehaviour{
 
 		
 	}
+	
+	
+	List<String> list_of_agent(String service) throws FIPAException {
+		DFAgentDescription dfd = new
+				DFAgentDescription();
+		ServiceDescription sd = new
+				ServiceDescription () ;
+		sd .setType(service); // name of the service
+		dfd.addServices(sd) ;
+		DFAgentDescription[] result = DFService.search(this.myAgent, dfd) ;
+		//You get the list of all the agents (AID) offering this service
+		System.out. println(result.length + "results " ) ;
+				if ( result . length>0)
+					System.out. println (result[0].getName());
+		List<String> res = new ArrayList<String>();
+		for (DFAgentDescription ag : result) {
+			res.add(ag.getName().getName());
+			System.out.println(ag.getName().getName());
+		}
+		return res;
+	}
+	
 
 }

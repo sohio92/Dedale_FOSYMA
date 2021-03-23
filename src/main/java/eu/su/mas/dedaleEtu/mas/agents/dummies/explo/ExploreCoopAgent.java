@@ -11,8 +11,12 @@ import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import jade.core.AID;
 import jade.core.behaviours.Behaviour;
 import jade.domain.AMSService;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.AMSAgentDescription;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.SearchConstraints;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
 
 /**
  * <pre>
@@ -49,6 +53,7 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 	protected void setup(){
 
 		super.setup();
+		
 		
 		final Object[] args = getArguments();
 		
@@ -118,6 +123,29 @@ public class ExploreCoopAgent extends AbstractDedaleAgent {
 		return agentsNames;
 	}
 	
+	
+	
+	
+	
+	/*void add_yellow_page(String service){
+		DFAgentDescription dfd = new DFAgentDescription();
+		dfd .setName(this.getAID()); // The agent AID
+		ServiceDescription sd = new
+				ServiceDescription () ;
+		sd.setType(service); // You have to give a name to each service your agent offers
+		sd.setName(this.getLocalName());//(local)name of the agent
+		dfd.addServices(sd) ;
+		//Register the service
+		try {
+			DFService.register(this, dfd);
+		} catch (FIPAException fe) {
+			fe . printStackTrace () ; }
+	}
+	
+	void remove_yellow_page(){
+		 try { DFService.deregister(this); }
+         catch (Exception e) {}
+	}*/
 	
 	
 }
