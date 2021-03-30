@@ -57,7 +57,8 @@ public class ShareMapBehaviour extends OneShotBehaviour{
 		this.receivers = receivers;
 	}
 	
-	public void sendMap() {		
+	public void sendMap() {	
+		System.out.println("Sharing my map");
 		this.contenu.updateSg(this.myMap.getSg());
 		
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
@@ -68,7 +69,7 @@ public class ShareMapBehaviour extends OneShotBehaviour{
 		for (String agentName : this.receivers) {
 			msg.addReceiver(new AID(agentName, AID.ISLOCALNAME));
 		}
-		msg.setProtocol("UselessProtocol");
+		msg.setProtocol("SharingProtocol");
 
 		if (myPosition!=""){
 			//System.out.println("Agent "+this.myAgent.getLocalName()+ " is trying to reach its friends");
@@ -88,5 +89,6 @@ public class ShareMapBehaviour extends OneShotBehaviour{
 	public void action() {
 		// TODO Auto-generated method stub
 		this.sendMap();
+		System.out.println("Sent my map");
 	}
 }

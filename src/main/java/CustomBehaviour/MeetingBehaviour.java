@@ -21,16 +21,21 @@ public class MeetingBehaviour extends ParallelBehaviour{
 	private String meetingPlace;
 	private String meetingTopic;
 	
+	private ArrayList<String> openNodes;
+	private HashSet<String> closedNodes;
+	
 	/*
 	 * Starts a meeting with other agents
 	 */
-	public MeetingBehaviour(final Agent myagent, MapRepresentation myMap, 
+	public MeetingBehaviour(final Agent myagent, MapRepresentation myMap, ArrayList<String> openNodes, HashSet<String> closedNodes,
 							List<String> receivers, String meetingPlace, String meetingTopic) {
 		this.myAgent = myagent;
 		this.myMap = myMap;
 		this.receivers = receivers;
 		this.meetingPlace = meetingPlace;
 		this.meetingTopic = meetingTopic;
+		this.openNodes = openNodes;
+		this.closedNodes = closedNodes;
 		
 		String myPosition = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 		try {
@@ -39,12 +44,11 @@ public class MeetingBehaviour extends ParallelBehaviour{
 			System.out.println("Pas de chemin");
 		}
 		
-		
+		System.out.println("Starting a new Meeting");
 		// Adding the sharing behaviour
 		if (this.meetingTopic=="ShareMap") {
-			new ShareMapBehaviour(this.myAgent, this.myMap, ((ExploreMultiAgent)this.myAgent).getOpenNodes(), ((ExploreMultiAgent)this.myAgent).getClosedNodes(), this.receivers);
-			new ReceiveMapBehaviour()
+			this.addSubBehaviour(new ShareMapBehaviour(this.myAgent, this.myMap, this.openNodes, this.closedNodes, this.receivers));
+			this.addSubBehaviour(new ReceiveMapBehaviour(this.myAgent, this.myMap));
 		}
-		// Adding the receiving behaviour
 	}
 }

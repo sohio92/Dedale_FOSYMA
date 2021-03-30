@@ -89,42 +89,6 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			
-			// Try to receive another agent's map
-			final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);			
-
-			final ACLMessage msg = this.myAgent.receive(msgTemplate);
-			final int compareNames = msg.getSender().getLocalName().compareTo(this.myAgent.getAID().getLocalName());
-			if (msg != null &&  compareNames != 0) {
-				// Get the content
-				MessageContainer contenu = null;
-				try {
-					contenu = (MessageContainer)msg.getContentObject();
-				} catch (UnreadableException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
-				SerializableSimpleGraph<String, MapAttribute> receivedSg = contenu.getGraph();
-				ArrayList<String> receivedOpen = contenu.getOpen();
-				HashSet<String> receivedClosed = contenu.getClosed();
-				String receivedIntentions = contenu.getIntention();
-
-				// Update the agent's map by mixing the two together
-				this.myMap.fuseMap(receivedSg);
-				System.out.println("Fused MAP : "+((AbstractDedaleAgent)this.myAgent).getLocalName());
-
-				receivedOpen.removeAll(this.closedNodes);
-				this.openNodes.removeAll(receivedClosed);
-				
-				this.openNodes.addAll(receivedOpen);
-				this.closedNodes.addAll(receivedClosed);
-				
-				// We yield an explorable node to the agent
-				this.openNodes.remove(receivedIntentions);
-				this.closedNodes.add(receivedIntentions);
-				this.abandonedNodes.add(receivedIntentions);
-			}
 
 			//1) remove the current node from openlist and add it to closedNodes.
 			this.closedNodes.add(myPosition);

@@ -33,6 +33,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	private MapRepresentation myMap;
 	private ArrayList<String> openNodes = new ArrayList<String>();
 	private HashSet<String> closedNodes = new HashSet<String>();
+	private List<String> abandonedNodes;
 	private String intentions;
 	
 
@@ -46,8 +47,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	protected void setup(){
 
 		super.setup();
-		
-			
+	
 	    /**
 	     * Get the other agents' names
 	     */
@@ -63,7 +63,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		this.myMap = new MapRepresentation();
 		this.myMap.prepareMigration();
 		lb.add(new ExploMultiBehaviour(this,this.myMap, this.openNodes, this.closedNodes));
-		lb.add(new ListenBehaviour(this, agentNames, this.myMap));
+		lb.add(new ListenBehaviour(this, agentNames, this.myMap, this.openNodes, this.closedNodes));
 		
 		
 		/***
@@ -107,7 +107,21 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	public ArrayList<String> getOpenNodes(){
 		return this.openNodes;
 	}
+	public void setOpenNodes(ArrayList<String> newOpen){
+		this.openNodes = newOpen;
+	}
+	
 	public HashSet<String> getClosedNodes(){
 		return this.closedNodes;
+	}
+	public void setClosedNodes(HashSet<String> newClosed){
+		this.closedNodes = newClosed;
+	}
+	
+	public List<String> getAbandonedNodes(){
+		return this.abandonedNodes;
+	}
+	public void setAbandonedNodes(List<String> newAbandon){
+		this.abandonedNodes = newAbandon;
 	}
 }
