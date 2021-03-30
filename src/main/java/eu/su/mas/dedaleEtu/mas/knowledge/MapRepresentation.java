@@ -57,7 +57,9 @@ public class MapRepresentation implements Serializable {
 
 	private SerializableSimpleGraph<String, MapAttribute> sg;//used as a temporary dataStructure during migration
 	private Boolean isMigrating = false;
-
+	
+	// What my friends sent me, not what they know because not sure they received our map
+	private List<SerializableSimpleGraph<String, MapAttribute>> otherKnowledge;
 
 	public MapRepresentation() {
 		//System.setProperty("org.graphstream.ui.renderer","org.graphstream.ui.j2dviewer.J2DGraphRenderer");

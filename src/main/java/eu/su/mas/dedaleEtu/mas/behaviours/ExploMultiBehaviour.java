@@ -94,7 +94,8 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 			final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);			
 
 			final ACLMessage msg = this.myAgent.receive(msgTemplate);
-			if (msg != null) {
+			final int compareNames = msg.getSender().getLocalName().compareTo(this.myAgent.getAID().getLocalName());
+			if (msg != null &&  compareNames != 0) {
 				// Get the content
 				MessageContainer contenu = null;
 				try {
@@ -170,11 +171,10 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 					//no directly accessible openNode
 					//chose one, compute the path and take the first step.
 					try {
-						nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
-					} catch(java.lang.IndexOutOfBoundsException e){
-						
+						nextNode = this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
+					} catch(java.lang.IndexOutOfBoundsException | java.lang.NullPointerException e){
+						nextNode = myPosition;
 					}
-					
 				}
 
 				//list of observations associated to the currentPosition
@@ -184,7 +184,6 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 				((ExploreMultiAgent)this.myAgent).setIntention(nextNode);
 				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
 			}
-
 		}
 	}
 

@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import CustomBehaviour.MeetingBehaviour;
 import dataStructures.tuple.Couple;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
@@ -16,7 +17,8 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
-
+import jade.lang.acl.MessageTemplate;
+import jade.lang.acl.UnreadableException;
 import CustomClass.MessageContainer;
 
 /**
@@ -24,43 +26,37 @@ import CustomClass.MessageContainer;
  * @author hc
  *
  */
-public class ShareMap extends TickerBehaviour{
+public class ListenBehaviour extends TickerBehaviour{
 
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -2058134622078521998L;
+	private static final long serialVersionUID = -2058134622078011998L;
 	
 	/**
-	 * Container of the message to send
-	 **/
-	private MessageContainer contenu;
-	/**
-	 * Map which is going to be shared
-	 */
-	private MapRepresentation myMap;
-	
-	/**
-	 * List of other agents
+	 * List of the other agents' names
 	 */
 	private List<String> receivers;
 	
 	/**
-	 * An agent tries to contact its friend and to give him its current position
+	 * Map known
+	 */
+	private MapRepresentation myMap;
+	
+	/**
+	 * An agent informs its friends that it is willing to communicate.
 	 * @param myagent the agent who posses the behaviour
 	 *  
 	 */
-	public ShareMap (final Agent myagent, MapRepresentation myMap, ArrayList<String> openNodes, HashSet<String> closedNodes, List<String> receivers) {
+	public ListenBehaviour (final Agent myagent, List<String> receivers, MapRepresentation myMap) {
 		super(myagent, 3000);
 		
-		this.myMap = myMap;
-		this.contenu = new MessageContainer(null, openNodes, closedNodes, ((ExploreMultiAgent)this.myAgent).getIntention());
 		this.receivers = receivers;
+		this.myMap = myMap;
 	}
 
 	@Override
 	public void onTick() {		
-		this.contenu.updateSg(this.myMap.getSg());
 		
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
@@ -70,12 +66,12 @@ public class ShareMap extends TickerBehaviour{
 		for (String agentName : this.receivers) {
 			msg.addReceiver(new AID(agentName, AID.ISLOCALNAME));
 		}
-		msg.setProtocol("UselessProtocol");
+		msg.setProtocol("ListenProtocol");
 
 		if (myPosition!=""){
 			//System.out.println("Agent "+this.myAgent.getLocalName()+ " is trying to reach its friends");
 			try {
-				msg.setContentObject(this.contenu);
+				msg.setContentObject(myPosition);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -83,6 +79,32 @@ public class ShareMap extends TickerBehaviour{
 
 			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
+		}
+		
+		/*
+		 * Listens for other agents.
+		 * 
+		 * If an agent is heard, it moves closer to guaranty communication
+		 */
+		final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);			
+
+		final ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
+		final int compareNames = msg.getSender().getLocalName().compareTo(this.myAgent.getAID().getLocalName());
+		
+		if (msgReceived != null && compareNames != 0) {
+			String meetingTopic = null;
+			String otherPosition = null;
+			
+			if (compareNames == -1) {
+				otherPosition = myPosition;
+			} else {
+				otherPosition = (String)msg.getContent();
+			}
+			
+			if (msgReceived.getProtocol() == "ListenProtocol") {
+				meetingTopic = "ShareMap";		
+			}
+			new MeetingBehaviour(this.myAgent, this.myMap, this.receivers, otherPosition, meetingTopic);
 		}
 	}
 }

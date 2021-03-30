@@ -7,7 +7,8 @@ import java.util.HashSet;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploMultiBehaviour;
-import eu.su.mas.dedaleEtu.mas.behaviours.ShareMap;
+import eu.su.mas.dedaleEtu.mas.behaviours.ListenBehaviour;
+import eu.su.mas.dedaleEtu.mas.behaviours.ShareMapBehaviour;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import jade.core.AID;
 import jade.core.behaviours.Behaviour;
@@ -62,7 +63,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		this.myMap = new MapRepresentation();
 		this.myMap.prepareMigration();
 		lb.add(new ExploMultiBehaviour(this,this.myMap, this.openNodes, this.closedNodes));
-		lb.add(new ShareMap(this, this.myMap, this.openNodes, this.closedNodes, agentNames));
+		lb.add(new ListenBehaviour(this, agentNames, this.myMap));
 		
 		
 		/***
@@ -103,5 +104,10 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		this.intentions = newIntention;
 	}
 	
-	
+	public ArrayList<String> getOpenNodes(){
+		return this.openNodes;
+	}
+	public HashSet<String> getClosedNodes(){
+		return this.closedNodes;
+	}
 }
