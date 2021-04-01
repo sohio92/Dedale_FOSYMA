@@ -58,20 +58,21 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 	private Set<String> closedNodes;
 
 
-	public ExploMultiBehaviour(final AbstractDedaleAgent myagent, MapRepresentation myMap, ArrayList<String> openNodes, HashSet<String> closedNodes) {
+	public ExploMultiBehaviour(final AbstractDedaleAgent myagent, MapRepresentation myMap,
+			ArrayList<String> openNodes, HashSet<String> closedNodes, ArrayList<String> abandonedNodes) {
 		super(myagent);
 		this.myMap=myMap;
 		this.openNodes=openNodes;
 		this.closedNodes=closedNodes;
 		
-		this.abandonedNodes=new ArrayList<String>();
+		this.abandonedNodes=abandonedNodes;
 	}
 
 	@Override
 	public void action() {
 
 		if(this.myMap.getMigration()==true) {
-			this.myMap.loadSavedData();
+			((ExploreMultiAgent)this.myAgent).loadAllMaps();
 		}
 		
 		//0) Retrieve the current position
@@ -121,11 +122,11 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 					this.openNodes.addAll(this.abandonedNodes);
 					this.closedNodes.removeAll(this.abandonedNodes);
 					this.abandonedNodes = new ArrayList<String>();
-					System.out.println("Roaming the yielded parts, removing doubt");	
+					((ExploreMultiAgent)this.myAgent).sayConsole("Roaming the yielded parts, removing doubt");	
 				}else {
 					//Explo finished
 					finished=true;
-					System.out.println("Exploration successufully done, behaviour removed.");	
+					((ExploreMultiAgent)this.myAgent).sayConsole("Exploration successufully done, behaviour removed.");	
 				}				
 			}else{
 				//4) select next move.

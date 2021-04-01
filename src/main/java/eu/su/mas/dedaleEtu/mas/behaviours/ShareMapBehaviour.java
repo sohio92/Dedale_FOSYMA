@@ -7,14 +7,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import dataStructures.serializableGraph.SerializableSimpleGraph;
 import dataStructures.tuple.Couple;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
+import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreMultiAgent;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.SimpleBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 
@@ -25,17 +28,15 @@ import CustomClass.MessageContainer;
  * @author hc
  *
  */
-public class ShareMapBehaviour extends OneShotBehaviour{
+public class ShareMapBehaviour extends SimpleBehaviour{
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -2058134622078521998L;
 	
-	/**
-	 * Container of the message to send
-	 **/
-	private MessageContainer contenu;
+	private boolean finished = false;
+	
 	/**
 	 * Map which is going to be shared
 	 */
@@ -44,51 +45,60 @@ public class ShareMapBehaviour extends OneShotBehaviour{
 	/**
 	 * List of other agents
 	 */
-	private List<String> receivers;
+	private ArrayList<String> receivers;
+	private double minReceivers;
 	
 	/**
 	 * An agent tries to contact its friend and to give him its current position
 	 * @param myagent the agent who posses the behaviour
 	 *  
 	 */
-	public ShareMapBehaviour (final Agent myagent, MapRepresentation myMap, ArrayList<String> openNodes, HashSet<String> closedNodes, List<String> receivers) {
+	public ShareMapBehaviour (final Agent myagent, MapRepresentation myMap,
+			ArrayList<String> openNodes, HashSet<String> closedNodes, ArrayList<String> receivers, int minReceivers) {
 		this.myMap = myMap;
-		this.contenu = new MessageContainer(null, openNodes, closedNodes, ((ExploreMultiAgent)this.myAgent).getIntention());
 		this.receivers = receivers;
-	}
-	
-	public void sendMap() {	
-		System.out.println("Sharing my map");
-		this.contenu.updateSg(this.myMap.getSg());
 		
-		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
-
-		//A message is defined by : a performative, a sender, a set of receivers, (a protocol),(a content (and/or contentOBject))
-		ACLMessage msg=new ACLMessage(ACLMessage.INFORM);
-		msg.setSender(this.myAgent.getAID());
-		for (String agentName : this.receivers) {
-			msg.addReceiver(new AID(agentName, AID.ISLOCALNAME));
-		}
-		msg.setProtocol("SharingProtocol");
-
-		if (myPosition!=""){
-			//System.out.println("Agent "+this.myAgent.getLocalName()+ " is trying to reach its friends");
-			try {
-				msg.setContentObject(this.contenu);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
-			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
-		}
+		// The sharing is considered complete if we received a map from half of the recipients
+		this.minReceivers = Math.round(minReceivers / 2);
+		
+		((ExploreMultiAgent)this.myAgent).sayConsole("I'm going to send my map to my friends.");
 	}
 
 	@Override
 	public void action() {
+		for (String otherAgent: this.receivers) {
+			// Prepare the message
+			ACLMessage msg=new ACLMessage(ACLMessage.INFORM);
+			msg.setSender(this.myAgent.getAID());
+			
+			msg.addReceiver(new AID(otherAgent, AID.ISLOCALNAME));
+			msg.setProtocol("ShareMapProtocol");
+			
+			// Retrieve what the other agent is missing
+			MapRepresentation otherMap = ((ExploreMultiAgent)this.myAgent).getOtherAgentMap(otherAgent);
+			SerializableSimpleGraph<String, MapAttribute> missingSg = otherMap.getMissingFromMap(this.myMap);
+			
+			try {
+				msg.setContentObject(missingSg);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			// Send the Message
+			((ExploreMultiAgent)this.myAgent).sayConsole("I'm sending my map to " + otherAgent);
+			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
+		}
+		
+		if (((ExploreMultiAgent)this.myAgent).getAlreadyCommunicated().size() >= minReceivers) {
+			((ExploreMultiAgent)this.myAgent).sayConsole("Enough friends have received my map for me to stop sharing");
+			this.finished = true;
+		}
+	}
+
+	@Override
+	public boolean done() {
 		// TODO Auto-generated method stub
-		this.sendMap();
-		System.out.println("Sent my map");
+		return finished;
 	}
 }

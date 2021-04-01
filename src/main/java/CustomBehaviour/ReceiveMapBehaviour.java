@@ -11,13 +11,16 @@ import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreMultiAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import jade.core.Agent;
+import jade.core.behaviours.SimpleBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 
-public class ReceiveMapBehaviour extends TickerBehaviour{
+public class ReceiveMapBehaviour extends SimpleBehaviour{
 	private static final long serialVersionUID = -2058139161078011998L;
+	
+	private boolean finished = false;
 	
 	private MapRepresentation myMap;
 	private ArrayList<String> openNodes = new ArrayList<String>();
@@ -25,8 +28,6 @@ public class ReceiveMapBehaviour extends TickerBehaviour{
 	private List<String> abandonedNodes;
 	
 	public ReceiveMapBehaviour(final Agent myagent, MapRepresentation myMap) {
-		super(myagent, 1000);
-		
 		this.myAgent = myagent;
 		this.myMap = myMap;
 		this.openNodes = ((ExploreMultiAgent)this.myAgent).getOpenNodes();
@@ -35,7 +36,7 @@ public class ReceiveMapBehaviour extends TickerBehaviour{
 	}
 
 	@Override
-	protected void onTick() {
+	public void action() {
 		System.out.println("Listen for a map");
 		// TODO Auto-generated method stub
 		final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);			
@@ -74,8 +75,14 @@ public class ReceiveMapBehaviour extends TickerBehaviour{
 			
 			((ExploreMultiAgent)this.myAgent).setAbandonedNodes(this.abandonedNodes);
 			
-			this.stop();
+			this.finished = true;
 		}		
+	}
+
+	@Override
+	public boolean done() {
+		// TODO Auto-generated method stub
+		return finished;
 	}
 
 }

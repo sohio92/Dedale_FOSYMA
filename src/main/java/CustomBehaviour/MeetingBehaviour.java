@@ -11,44 +11,62 @@ import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import jade.core.Agent;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.ParallelBehaviour;
+import jade.core.behaviours.SequentialBehaviour;
 
-public class MeetingBehaviour extends ParallelBehaviour{
+public class MeetingBehaviour extends SequentialBehaviour{
 	private static final long serialVersionUID = -2058134021078011998L;
 	
-	private List<String> receivers;
+	
 	private MapRepresentation myMap;
 	
-	private String meetingPlace;
+	private ArrayList<String> participants;
 	private String meetingTopic;
 	
 	private ArrayList<String> openNodes;
 	private HashSet<String> closedNodes;
 	
+	private int minParticipants; // Minimum number of other agents to start the meeting
+	
 	/*
 	 * Starts a meeting with other agents
 	 */
-	public MeetingBehaviour(final Agent myagent, MapRepresentation myMap, ArrayList<String> openNodes, HashSet<String> closedNodes,
-							List<String> receivers, String meetingPlace, String meetingTopic) {
+	public MeetingBehaviour(final Agent myagent, MapRepresentation myMap,
+			ArrayList<String> openNodes, HashSet<String> closedNodes, ArrayList<String> abandonedNodes,
+			ArrayList<String> participants, String meetingTopic) {
+		
 		this.myAgent = myagent;
+		
 		this.myMap = myMap;
-		this.receivers = receivers;
-		this.meetingPlace = meetingPlace;
-		this.meetingTopic = meetingTopic;
 		this.openNodes = openNodes;
 		this.closedNodes = closedNodes;
 		
-		String myPosition = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
-		try {
-			((AbstractDedaleAgent)this.myAgent).moveTo(this.myMap.getShortestPath(myPosition, meetingPlace).get(0));
-		} catch (java.lang.NullPointerException e) {
-			System.out.println("Pas de chemin");
-		}
+		this.participants = participants;
+		this.meetingTopic = meetingTopic;
 		
-		System.out.println("Starting a new Meeting");
-		// Adding the sharing behaviour
-		if (this.meetingTopic=="ShareMap") {
-			this.addSubBehaviour(new ShareMapBehaviour(this.myAgent, this.myMap, this.openNodes, this.closedNodes, this.receivers));
-			this.addSubBehaviour(new ReceiveMapBehaviour(this.myAgent, this.myMap));
+		if (this.meetingTopic == "MeetingShareMap") {
+			this.minParticipants = 1;
 		}
+	}
+	
+	public void onStart() {
+		((ExploreMultiAgent)this.myAgent).sayConsole("I'm going to start a meeting with " + this.participants);
+		// The agent notifies other behaviours that it is on a meeting
+		((ExploreMultiAgent)this.myAgent).setOnGoingMeeting(true);
+		((ExploreMultiAgent)this.myAgent).resetAlreadyCommunicated();
+		
+		// Add the move to the meeting
+		this.addSubBehaviour(new MoveToMeetingBehaviour(this.myAgent, this.myMap, this.participants));
+		// Add the confirming participation to the meeting
+		this.addSubBehaviour(new ConfirmMeetingBehaviour(this.myAgent, this.participants, this.minParticipants));
+		// Add the process of the meeting
+		if (this.meetingTopic=="MeetingShareMap") {
+			this.addSubBehaviour(new ShareMapBehaviour(this.myAgent, this.myMap, this.openNodes, this.closedNodes, this.participants, this.minParticipants));
+		}
+	}
+	
+	public int onEnd() {
+		// The agent notifies other behaviours that the meeting ended
+		((ExploreMultiAgent)this.myAgent).endMeeting();
+		return 1;
 	}
 }
