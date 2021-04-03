@@ -1,4 +1,4 @@
-package eu.su.mas.dedaleEtu.mas.behaviours;
+package CustomBehaviour;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,8 +20,6 @@ import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.SimpleBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
-
-import CustomClass.MessageContainer;
 
 /**
  * This example behaviour try to send a hello message (every 3s maximum) to agents Collect2 Collect1
@@ -55,15 +53,18 @@ public class ShareMapBehaviour extends SimpleBehaviour{
 	 */
 	public ShareMapBehaviour (final Agent myagent, MapRepresentation myMap,
 			ArrayList<String> openNodes, HashSet<String> closedNodes, ArrayList<String> receivers, int minReceivers) {
+		this.myAgent = myagent;
 		this.myMap = myMap;
 		this.receivers = receivers;
 		
 		// The sharing is considered complete if we received a map from half of the recipients
 		this.minReceivers = Math.round(minReceivers / 2);
-		
+	}
+	
+	public void onStart() {
 		((ExploreMultiAgent)this.myAgent).sayConsole("I'm going to send my map to my friends.");
 	}
-
+	
 	@Override
 	public void action() {
 		for (String otherAgent: this.receivers) {
@@ -75,7 +76,7 @@ public class ShareMapBehaviour extends SimpleBehaviour{
 			msg.setProtocol("ShareMapProtocol");
 			
 			// Retrieve what the other agent is missing
-			MapRepresentation otherMap = ((ExploreMultiAgent)this.myAgent).getOtherAgentMap(otherAgent);
+			MapRepresentation otherMap = ((ExploreMultiAgent)this.myAgent).getMyKnowledge(otherAgent).map;
 			SerializableSimpleGraph<String, MapAttribute> missingSg = otherMap.getMissingFromMap(this.myMap);
 			
 			try {
@@ -91,7 +92,7 @@ public class ShareMapBehaviour extends SimpleBehaviour{
 		}
 		
 		if (((ExploreMultiAgent)this.myAgent).getAlreadyCommunicated().size() >= minReceivers) {
-			((ExploreMultiAgent)this.myAgent).sayConsole("Enough friends have received my map for me to stop sharing");
+			((ExploreMultiAgent)this.myAgent).sayConsole("Enough friends have me sent me map for me to stop sharing");
 			this.finished = true;
 		}
 	}

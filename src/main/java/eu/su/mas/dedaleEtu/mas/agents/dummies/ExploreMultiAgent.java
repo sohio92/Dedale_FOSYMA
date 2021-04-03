@@ -6,6 +6,7 @@ import java.util.List;
 import CustomBehaviour.DecisionBehaviour;
 import CustomBehaviour.ListenBehaviour;
 import CustomBehaviour.PingPositionBehaviour;
+import CustomBehaviour.ShareMapBehaviour;
 import dataStructures.serializableGraph.SerializableSimpleGraph;
 
 import java.util.HashSet;
@@ -13,7 +14,7 @@ import java.util.HashSet;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.behaviours.ExploMultiBehaviour;
-import eu.su.mas.dedaleEtu.mas.behaviours.ShareMapBehaviour;
+import eu.su.mas.dedaleEtu.mas.knowledge.AgentKnowledge;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import jade.core.AID;
@@ -36,6 +37,9 @@ import jade.domain.FIPAAgentManagement.SearchConstraints;
 public class ExploreMultiAgent extends AbstractDedaleAgent {
 
 	private static final long serialVersionUID = -6431752665590433727L;
+	
+	// Knowledge about the other agents
+	private List<AgentKnowledge> agentsKnowledge = new ArrayList<AgentKnowledge>();
 	
 	// Name of the application's other agents
 	private List<String> agentNames;
@@ -88,7 +92,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		this.myMap = new MapRepresentation("me");
 		
 		for (String agentName: this.agentNames) {
-			this.agentsMaps.add(new MapRepresentation(agentName));
+			this.agentsKnowledge.add(new AgentKnowledge(agentName));
 		}
 		this.serializeAllMaps();
 		
@@ -123,17 +127,16 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		
 		this.myMap.prepareMigration();
 		
-		for(MapRepresentation otherMap: this.agentsMaps) {
-			otherMap.prepareMigration();
+		for(AgentKnowledge otherKnowledge: this.agentsKnowledge) {
+			otherKnowledge.map.prepareMigration();
 		}
 	}
 	public void loadAllMaps() {
 		// Restore all maps from migrated state
 		this.myMap.loadSavedData();
-		this.myMap.setCurrentPosition(this.getCurrentPosition());
-		for (MapRepresentation otherMap: this.agentsMaps) {
-			otherMap.loadSavedData();
-			otherMap.setCurrentPosition(this.getCurrentPosition());
+		for (AgentKnowledge otherKnowledge: this.agentsKnowledge) {
+			otherKnowledge.map.loadSavedData();
+			otherKnowledge.setLastPosition(this.getCurrentPosition());
 		}
 		this.loaded = true;
 	}
@@ -166,32 +169,40 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		this.intentions = newIntention;
 	}
 	
-	public MapRepresentation getOtherAgentMap(String otherName) {
-		// Return the known map owned by the given agent
-		for (MapRepresentation mapIter: this.agentsMaps) {
-			if (mapIter.getOwner()==otherName) {
-				return mapIter;
+	public AgentKnowledge getMyKnowledge(String otherName) {
+		// Return the knowledge about the given agent
+		for (AgentKnowledge otherKnowledge: this.agentsKnowledge) {
+			if (otherKnowledge.getName().equals(otherName)) {
+				return otherKnowledge;
 			}
 		}
 		return null;
 	}
-	public void updateOthersIgnorance(String myPosition, String newNodeID) {
+	public void updateOthersIgnorance() {
 		// Increments the difference in known edges and known nodes after a step from myPosition to newNode
-		for (MapRepresentation otherMap: this.agentsMaps) {
-			otherMap.updateIgnorance(this.myMap);
+		for (AgentKnowledge otherKnowledge: this.agentsKnowledge) {
+			otherKnowledge.map.updateIgnorance(this.myMap);
 		}
 	}
 	
 	public List<String> getAgentsAround() {
 		return this.agentsAround;
 	}
-	public void addAgentsAround(String newAgent, String newPosition) {
-		// Add an agent to the vicinity and updates its last position
-		if (!this.agentsAround.contains(newAgent)) {
-			this.agentsAround.add(newAgent);
+	public void addAgentsAround(String newAgent, String newPosition, long timeStamp) {
+		AgentKnowledge otherKnowledge = this.getMyKnowledge(newAgent);
+		// Checking if the information is relevant
+		if (otherKnowledge.getMostRecentTime() < timeStamp) {
+			// Add an agent to the vicinity and updates its last position
+			if (!this.agentsAround.contains(newAgent)) {
+				this.agentsAround.add(newAgent);
+				otherKnowledge.addNbEncounters(1);
+			}
+			
+			otherKnowledge.setMostRecentTime(timeStamp);
+			otherKnowledge.setLastPosition(newPosition);
+			this.sayConsole(newAgent + " last known position is now " + newPosition);
 		}
-		this.getOtherAgentMap(newAgent).setCurrentPosition(newPosition);
-		this.sayConsole(newAgent + " last known position is now " + newPosition);
+		
 		// Agent might be in an unknown location, still needs to add update to the "me" map
 		//
 	}
@@ -202,10 +213,16 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	public void clearSurroundings(int maxDistance) {
 		// If an agent is too far, it is removed from the surroundings
 		String myPosition = this.getCurrentPosition();
-		for (MapRepresentation otherMap: this.agentsMaps) {
-			int distance = this.myMap.getShortestPath(myPosition, otherMap.getCurrentPosition()).size();
+		for (AgentKnowledge otherKnowledge: this.agentsKnowledge) {
+			int distance = 0;
+			try {
+				distance = this.myMap.getShortestPath(myPosition, otherKnowledge.getLastPosition()).size();
+			} catch (NullPointerException e) {
+				distance = -1;
+			}
+			
 			if (distance > maxDistance || distance == 0) {
-				this.removeAgentsAround(otherMap.getOwner());
+				this.removeAgentsAround(otherKnowledge.map.getOwner());
 			}
 		}
 	}
@@ -233,8 +250,20 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		this.myMap.fuseMap(otherSg);
 		
 		// Update the other agent's last known map
-		MapRepresentation otherMap = this.getOtherAgentMap(otherAgent);
-		otherMap.fuseMap(this.myMap.getSg());
+		AgentKnowledge otherKnowledge = this.getMyKnowledge(otherAgent);
+		otherKnowledge.map.fuseMap(this.myMap.getSg());
+		this.updateOthersIgnorance();
+	}
+	
+	public void addDiffNodes(int increment) {
+		for (AgentKnowledge otherKnowledge: this.agentsKnowledge) {
+			otherKnowledge.map.addDiffNodes(increment);
+		}
+	}
+	public void addDiffEdges(int increment) {
+		for (AgentKnowledge otherKnowledge: this.agentsKnowledge) {
+			otherKnowledge.map.addDiffEdges(increment);
+		}
 	}
 	
 	public List<String> getAlreadyCommunicated(){

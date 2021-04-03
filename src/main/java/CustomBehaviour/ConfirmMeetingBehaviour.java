@@ -27,6 +27,9 @@ public class ConfirmMeetingBehaviour extends SimpleBehaviour {
 		this.minParticipants = minParticipants;
 		
 		// Maybe add a waiting time?
+	}
+	
+	public void onStart() {
 		((ExploreMultiAgent)this.myAgent).sayConsole("I'm going to make sure my friends are there.");
 	}
 	

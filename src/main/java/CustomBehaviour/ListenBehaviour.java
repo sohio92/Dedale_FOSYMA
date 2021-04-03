@@ -21,7 +21,6 @@ import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
-import CustomClass.MessageContainer;
 
 public class ListenBehaviour extends CyclicBehaviour{
 
@@ -46,48 +45,57 @@ public class ListenBehaviour extends CyclicBehaviour{
 		}
 	}
 	
-	public void listen() {
+	private void listen() {
 		// Is the agent in a meeting
 		boolean meeting = ((ExploreMultiAgent)this.myAgent).getOnGoingMeeting();
 		
 		// Receiving a message
 		final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);			
 		final ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
-		
+
 		// Checking if the received message is an echo
 		String otherName = msgReceived.getSender().getLocalName();
 		final int compareNames = otherName.compareTo(this.myAgent.getAID().getLocalName());
 		
 		// Handling of the content
 		if (msgReceived != null && compareNames != 0) {
-			((ExploreMultiAgent)this.myAgent).sayConsole("I received a " + msgReceived.getProtocol() + "message from " + otherName);
+			
 			
 			// Let other behaviours know that an agent was found at the known position
 			if (msgReceived.getProtocol().equals("PingProtocol")) {
-				String otherPosition = msgReceived.getContent();
-				((ExploreMultiAgent)this.myAgent).addAgentsAround(otherName, otherPosition);
-				
+				this.pingProcess(otherName, msgReceived);
 			}
 			// Update our map
 			else if (msgReceived.getProtocol().equals("ShareMapProtocol")) {
-				// We now have communicated with the agent -> Acknowledge
-				if (meeting == true) {
-					((ExploreMultiAgent)this.myAgent).addAlreadyCommunicated(otherName);
-				}
-				
-				// We update our map (even if no meeting, we might be scraping another one)
-				SerializableSimpleGraph<String, MapAttribute> otherSg;
-				try {
-					otherSg = (SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject();
-					((ExploreMultiAgent)this.myAgent).updateMap(otherName, otherSg);
-				} catch (UnreadableException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				((ExploreMultiAgent)this.myAgent).sayConsole("I received a " + msgReceived.getProtocol() + " message from " + otherName);
+				this.shareMapProcess(otherName, msgReceived, meeting);
 			}
 		}
 		
 		// If an agent is too far away, it is removed from the surroundings
 		((ExploreMultiAgent)this.myAgent).clearSurroundings(this.maxRange);
 	}
+	
+	private void pingProcess(String otherName, ACLMessage msgReceived) {
+		String otherPosition = msgReceived.getContent();
+		((ExploreMultiAgent)this.myAgent).addAgentsAround(otherName, otherPosition, msgReceived.getPostTimeStamp());
+	}
+	
+	private void shareMapProcess(String otherName, ACLMessage msgReceived, boolean meeting) {
+		// We now have communicated with the agent -> Acknowledge
+		if (meeting == true) {
+			((ExploreMultiAgent)this.myAgent).addAlreadyCommunicated(otherName);
+		}
+		
+		// We update our map (even if no meeting, we might be scraping another one)
+		SerializableSimpleGraph<String, MapAttribute> otherSg;
+		try {
+			otherSg = (SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject();
+			((ExploreMultiAgent)this.myAgent).updateMap(otherName, otherSg);
+		} catch (UnreadableException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 }

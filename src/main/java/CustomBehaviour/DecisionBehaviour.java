@@ -28,20 +28,19 @@ public class DecisionBehaviour extends TickerBehaviour{
 	
 	private Behaviour currentBehaviour;
 	private ExploMultiBehaviour currentExplo;
+	private String lastDecision;
 	
 	private ArrayList<String> interestingAgents; // interesting agents in the vicinity
 	
-	private static int tickLength = 3000;
-	private int meetingMaxLength = 10000; // A meeting's max length (prevents stalling)
+	private static int tickLength = 1000;
+	private int meetingMaxLength = 6000; // A meeting's max length (prevents stalling)
 	private int timeElapsedSinceMeeting = 0;
 
 	public DecisionBehaviour(final Agent myagent, MapRepresentation myMap){
 		super(myagent, tickLength);
 		
 		this.myAgent = myagent;
-		this.myMap = myMap;
-		
-		
+		this.myMap = myMap;	
 	}
 	
 	public void onStart() {
@@ -49,16 +48,26 @@ public class DecisionBehaviour extends TickerBehaviour{
 		this.myAgent.addBehaviour(currentExplo);
 		
 		currentBehaviour = currentExplo;
+		this.lastDecision = "Exploration";
 	}
 	
 	@Override
-	public void onTick() {	
+	public void onTick() {
+		List<String> agentsAround = ((ExploreMultiAgent)this.myAgent).getAgentsAround();
+		if (agentsAround.size() != 0) {
+			((ExploreMultiAgent)this.myAgent).sayConsole("The other agents in my surroundings are : " + agentsAround);
+		}
+		
 		this.interestingAgents = new ArrayList<String>();
 		
 		String decision = this.takeDecision();
-		this.executeDecision(decision);
 		
-		((ExploreMultiAgent)this.myAgent).sayConsole("I took the " + decision + " decision.");
+		if (!this.lastDecision.equals(decision)) {
+			((ExploreMultiAgent)this.myAgent).sayConsole("I took the " + decision + " decision.");
+		}
+		this.lastDecision = decision;
+		
+		this.executeDecision(decision);
 	}
 
 	// Takes a decision based on surroundings
@@ -92,7 +101,7 @@ public class DecisionBehaviour extends TickerBehaviour{
 			// Get the agents who are worth sharing with
 			if (agentsAround.size() != 0) {
 				for (String otherAgent: agentsAround) {
-					if (this.shareWorth(4, otherAgent)) {this.interestingAgents.add(otherAgent);}
+					if (this.shareWorth(10, otherAgent)) {this.interestingAgents.add(otherAgent);}
 					else {((ExploreMultiAgent)this.myAgent).sayConsole("I considered " + otherAgent + " but it is not worth it.");}
 				}
 				
@@ -127,7 +136,7 @@ public class DecisionBehaviour extends TickerBehaviour{
 	
 	// Returns true if it is worth sharing a map with the otherAgent
 	public boolean shareWorth(int threshold, String otherAgent) {	
-		MapRepresentation otherMap = ((ExploreMultiAgent)this.myAgent).getOtherAgentMap(otherAgent);
+		MapRepresentation otherMap = ((ExploreMultiAgent)this.myAgent).getMyKnowledge(otherAgent).map;
 		return Math.floor(otherMap.getDiffEdges()/2) + otherMap.getDiffNodes() >= threshold;
 	}
 

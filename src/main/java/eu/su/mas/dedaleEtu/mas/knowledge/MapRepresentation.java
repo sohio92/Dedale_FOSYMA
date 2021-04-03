@@ -61,8 +61,7 @@ public class MapRepresentation implements Serializable {
 		
 	// Owner of the map
 	private String ownerName;
-	// Last known position of the owner
-	private String currentPosition;
+	
 	// How different the map is to that of "me"
 	private int diffEdge = 0;
 	private int diffNodes = 0;
@@ -147,10 +146,6 @@ public class MapRepresentation implements Serializable {
 				this.addEdge(n.getNodeId(),s);
 			}
 		}
-		
-		// The fused map is now identical to "me" map
-		this.diffEdge = 0;
-		this.diffNodes = 0;
 	}
 	
 	/*
@@ -229,7 +224,7 @@ public class MapRepresentation implements Serializable {
 		this.g= new SingleGraph("My world vision");
 		this.g.setAttribute("ui.stylesheet",nodeStyle);
 
-		openGui();
+		this.testGui();
 
 		Integer nbEd=0;
 		for (SerializableNode<String, MapAttribute> n: this.sg.getAllNodes()){
@@ -262,7 +257,7 @@ public class MapRepresentation implements Serializable {
 	 * Method called after a migration to reopen GUI components
 	 */
 	public void testGui() {
-		if (this.viewer==null && this.ownerName == "me")
+		if (this.viewer==null && this.ownerName.equals("me"))
 			openGui();
 	}
 	private void openGui() {
@@ -280,12 +275,6 @@ public class MapRepresentation implements Serializable {
 	public String getOwner() {
 		return this.ownerName;
 	}
-	public String getCurrentPosition() {
-		return this.currentPosition;
-	}
-	public void setCurrentPosition(String newPosition) {
-		this.currentPosition = newPosition;
-	}
 	
 	public int getDiffEdges(){
 		return this.diffEdge;
@@ -298,6 +287,10 @@ public class MapRepresentation implements Serializable {
 	}
 	public void addDiffNodes(int increment) {
 		this.diffNodes += increment;
+	}
+	public void resetDiff() {
+		this.diffEdge = 0;
+		this.diffNodes = 0;
 	}
 	public SerializableSimpleGraph<String, MapAttribute> getMissingFromMap(MapRepresentation otherMap){
 		// Returns the nodes and edges that the current map lacks
