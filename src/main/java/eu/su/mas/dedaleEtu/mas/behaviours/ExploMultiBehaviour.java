@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import dataStructures.serializableGraph.SerializableNode;
@@ -18,8 +19,6 @@ import jade.core.behaviours.SimpleBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
-
-import CustomClass.MessageContainer;
 
 /**
  * This behaviour allows an agent to explore the environment and learn the associated topological map.
@@ -56,26 +55,33 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 	 * Visited nodes
 	 */
 	private Set<String> closedNodes;
+	/*
+	 * Last position
+	 */
+	private String lastPosition;
+	private int timeStuck = 0;
 
 
-	public ExploMultiBehaviour(final AbstractDedaleAgent myagent, MapRepresentation myMap, ArrayList<String> openNodes, HashSet<String> closedNodes) {
+	public ExploMultiBehaviour(final AbstractDedaleAgent myagent, MapRepresentation myMap,
+			ArrayList<String> openNodes, HashSet<String> closedNodes, ArrayList<String> abandonedNodes) {
 		super(myagent);
 		this.myMap=myMap;
 		this.openNodes=openNodes;
 		this.closedNodes=closedNodes;
 		
-		this.abandonedNodes=new ArrayList<String>();
+		this.abandonedNodes=abandonedNodes;
 	}
 
 	@Override
 	public void action() {
 
 		if(this.myMap.getMigration()==true) {
-			this.myMap.loadSavedData();
+			((ExploreMultiAgent)this.myAgent).loadAllMaps();
 		}
 		
 		//0) Retrieve the current position
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+		this.lastPosition = myPosition;
 	
 		if (myPosition!=null){
 			//List of observable from the agent's current position
@@ -88,41 +94,6 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 				this.myAgent.doWait(500);
 			} catch (Exception e) {
 				e.printStackTrace();
-			}
-			
-			// Try to receive another agent's map
-			final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);			
-
-			final ACLMessage msg = this.myAgent.receive(msgTemplate);
-			if (msg != null) {
-				// Get the content
-				MessageContainer contenu = null;
-				try {
-					contenu = (MessageContainer)msg.getContentObject();
-				} catch (UnreadableException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
-				SerializableSimpleGraph<String, MapAttribute> receivedSg = contenu.getGraph();
-				ArrayList<String> receivedOpen = contenu.getOpen();
-				HashSet<String> receivedClosed = contenu.getClosed();
-				String receivedIntentions = contenu.getIntention();
-
-				// Update the agent's map by mixing the two together
-				this.myMap.fuseMap(receivedSg);
-				System.out.println("Fused MAP : "+((AbstractDedaleAgent)this.myAgent).getLocalName());
-
-				receivedOpen.removeAll(this.closedNodes);
-				this.openNodes.removeAll(receivedClosed);
-				
-				this.openNodes.addAll(receivedOpen);
-				this.closedNodes.addAll(receivedClosed);
-				
-				// We yield an explorable node to the agent
-				this.openNodes.remove(receivedIntentions);
-				this.closedNodes.add(receivedIntentions);
-				this.abandonedNodes.add(receivedIntentions);
 			}
 
 			//1) remove the current node from openlist and add it to closedNodes.
@@ -141,10 +112,12 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 						this.openNodes.add(nodeId);
 						this.myMap.addNode(nodeId, MapAttribute.open);
 						this.myMap.addEdge(myPosition, nodeId);	
+						((ExploreMultiAgent)this.myAgent).addDiffNodes(1);
 					}else{
 						//the node exist, but not necessarily the edge
 						this.myMap.addEdge(myPosition, nodeId);
 					}
+					((ExploreMultiAgent)this.myAgent).addDiffEdges(1);
 					if (nextNode==null) nextNode=nodeId;
 				}
 			}
@@ -156,11 +129,11 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 					this.openNodes.addAll(this.abandonedNodes);
 					this.closedNodes.removeAll(this.abandonedNodes);
 					this.abandonedNodes = new ArrayList<String>();
-					System.out.println("Roaming the yielded parts, removing doubt");	
+					((ExploreMultiAgent)this.myAgent).sayConsole("Roaming the yielded parts, removing doubt");	
 				}else {
 					//Explo finished
 					finished=true;
-					System.out.println("Exploration successufully done, behaviour removed.");	
+					((ExploreMultiAgent)this.myAgent).sayConsole("Exploration successufully done, behaviour removed.");	
 				}				
 			}else{
 				//4) select next move.
@@ -170,11 +143,10 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 					//no directly accessible openNode
 					//chose one, compute the path and take the first step.
 					try {
-						nextNode=this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
-					} catch(java.lang.IndexOutOfBoundsException e){
-						
+						nextNode = this.myMap.getShortestPath(myPosition, this.openNodes.get(0)).get(0);
+					} catch(java.lang.IndexOutOfBoundsException | java.lang.NullPointerException e){
+						nextNode = myPosition;
 					}
-					
 				}
 
 				//list of observations associated to the currentPosition
@@ -183,8 +155,34 @@ public class ExploMultiBehaviour extends SimpleBehaviour {
 				
 				((ExploreMultiAgent)this.myAgent).setIntention(nextNode);
 				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
-			}
+				
+				// If stuck, choose a random node as destination
+				if (((AbstractDedaleAgent) this.myAgent).getCurrentPosition().equals(this.lastPosition)) {
+					// Check the time the agent has been stuck for
+					if (this.timeStuck >= 2) {
+						// Randomly draw another node as destination
+						Random rand = new Random();
+						Set<SerializableNode<String, MapAttribute>> allNodes = this.myMap.getSg().getAllNodes();
+						int randomIndex = rand.nextInt(allNodes.size());
 
+						int i = 0;
+						for (SerializableNode<String, MapAttribute> n : allNodes) {
+							if (i == randomIndex) {
+								nextNode = this.myMap.getShortestPath(myPosition, n.getNodeId()).get(0);
+							}
+							i++;
+						}
+						
+						((ExploreMultiAgent)this.myAgent).setIntention(nextNode);
+						((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
+						((ExploreMultiAgent) this.myAgent).sayConsole("I'm stuck! I'm moving out of the way to " + nextNode);
+					} else {
+						this.timeStuck++;
+					}
+				} else {
+					this.timeStuck = 0;
+				}
+			}
 		}
 	}
 

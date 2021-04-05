@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.graphstream.algorithm.Dijkstra;
 import org.graphstream.graph.Edge;
@@ -57,24 +58,21 @@ public class MapRepresentation implements Serializable {
 
 	private SerializableSimpleGraph<String, MapAttribute> sg;//used as a temporary dataStructure during migration
 	private Boolean isMigrating = false;
+		
+	// Owner of the map
+	private String ownerName;
+	
+	// How different the map is to that of "me"
+	private int diffEdge = 0;
+	private int diffNodes = 0;
 
-
-	public MapRepresentation() {
-		//System.setProperty("org.graphstream.ui.renderer","org.graphstream.ui.j2dviewer.J2DGraphRenderer");
+	public MapRepresentation(String ownerName) {
 		System.setProperty("org.graphstream.ui", "javafx");
 		this.g= new SingleGraph("My world vision");
 		this.g.setAttribute("ui.stylesheet",nodeStyle);
-		
 		this.sg = new SerializableSimpleGraph<String,MapAttribute>();
-
-		//try {
-        //    Platform.runLater(() -> {
-        //        openGui();
-        //    });
-        //} catch (java.lang.IllegalStateException e) {}
-		//this.viewer = this.g.display();
-
 		this.nbEdges=0;
+		this.ownerName = ownerName;
 	}
 
 	/**
@@ -98,7 +96,6 @@ public class MapRepresentation implements Serializable {
 	
 	public void updateNode(String id,MapAttribute mapAttribute){
 		Node n;
-		
 		if (this.g.getNode(id)==null){
 			this.addNode(id, mapAttribute);
 		}else{
@@ -134,7 +131,7 @@ public class MapRepresentation implements Serializable {
 		} catch(ElementNotFoundException e3){
 			
 		}
-	}
+	}	
 	/**
 	 * Fuse two maps together
 	 */
@@ -144,31 +141,16 @@ public class MapRepresentation implements Serializable {
 			this.updateNode(n.getNodeId(), n.getNodeContent());	
 		}
 
-		//4 now that all nodes are added, we can add edges
-		//this.g.addNode(n.getNodeId()).setAttribute("ui.class", n.getNodeContent().toString());
-		//We cannot keep the id of the edges has they were choosen independently of the current struct 
-		//Integer nbEd=this.g.getEdgeCount()+1;
-
 		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
 			for(String s:sg2.getEdges(n.getNodeId())){
 				this.addEdge(n.getNodeId(),s);
-				//				boolean alreadyIn=false;
-				//				try {
-				//				try {
-				//					this.g.addEdge(nbEd.toString(),n.getNodeId(),s);
-				//				}catch(EdgeRejectedException e){
-				//					alreadyIn=true;
-				//				}
-				//				
-				//				}catch (IdAlreadyInUseException e2) {
-				//					System.out.println("Pas normal");
-				//				}
-				//				if (!alreadyIn) nbEd++;
 			}
 		}
-//		System.out.println("Merge done");
 	}
 	
+	/*
+	 * Gives a serializable version of the graph
+	 */
 	public SerializableSimpleGraph<String, MapAttribute> getSg(){
 		this.sg= new SerializableSimpleGraph<String,MapAttribute>();
         Iterator<Node> iter=this.g.iterator();
@@ -242,7 +224,7 @@ public class MapRepresentation implements Serializable {
 		this.g= new SingleGraph("My world vision");
 		this.g.setAttribute("ui.stylesheet",nodeStyle);
 
-		openGui();
+		this.testGui();
 
 		Integer nbEd=0;
 		for (SerializableNode<String, MapAttribute> n: this.sg.getAllNodes()){
@@ -275,7 +257,7 @@ public class MapRepresentation implements Serializable {
 	 * Method called after a migration to reopen GUI components
 	 */
 	public void testGui() {
-		if (this.viewer==null)
+		if (this.viewer==null && this.ownerName.equals("me"))
 			openGui();
 	}
 	private void openGui() {
@@ -288,5 +270,77 @@ public class MapRepresentation implements Serializable {
 	
 	public Boolean getMigration() {
 		return this.isMigrating;
+	}
+	
+	public String getOwner() {
+		return this.ownerName;
+	}
+	
+	public int getDiffEdges(){
+		return this.diffEdge;
+	}
+	public int getDiffNodes(){
+		return this.diffNodes;
+	}
+	public void addDiffEdges(int increment) {
+		this.diffEdge += increment;
+	}
+	public void addDiffNodes(int increment) {
+		this.diffNodes += increment;
+	}
+	public void resetDiff() {
+		this.diffEdge = 0;
+		this.diffNodes = 0;
+	}
+	public SerializableSimpleGraph<String, MapAttribute> getMissingFromMap(MapRepresentation otherMap){
+		// Returns the nodes and edges that the current map lacks
+		SerializableSimpleGraph<String,MapAttribute> missingSg = new SerializableSimpleGraph<String,MapAttribute>();
+		SerializableSimpleGraph<String, MapAttribute> otherSg = otherMap.getSg();
+		this.sg = this.getSg();
+		
+		// Adding the missing nodes
+		Set<SerializableNode<String, MapAttribute>> otherNodes = otherSg.getAllNodes();
+		for (SerializableNode<String, MapAttribute> n: this.sg.getAllNodes()){
+			if (!otherNodes.contains(n)) {
+				missingSg.addNode(n.getNodeId(),n.getNodeContent());
+			}
+		}
+		
+		// Adding the missing edges
+		Integer nbEd = 0;
+		Set<SerializableNode<String, MapAttribute>> missingNodes = missingSg.getAllNodes();
+		//	Iterating over all known nodes
+		for (SerializableNode<String, MapAttribute> n: this.sg.getAllNodes()){
+			Set<String> otherEdge = otherSg.getEdges(n.getNodeId());
+			//	Iterating over all known edges
+			for(String s: this.sg.getEdges(n.getNodeId())){
+				// If the edge is missing
+				if (!otherEdge.contains(s)) {
+					// If the node from the edge isn't missing but its edges are incomplete we add the node to missingSg
+					if (!missingNodes.contains(n)) {
+						missingSg.addNode(n.getNodeId());
+					}
+					// We add the edge
+					missingSg.addEdge(nbEd.toString(),n.getNodeId() ,s);
+					nbEd ++;
+				}
+				
+			}
+		}
+		return missingSg;
+	}
+	
+	public int getNbNodes() {
+		return this.g.getNodeCount();
+	}
+	
+	public int getNbEdges() {
+		return this.g.getEdgeCount();
+	}
+	
+	public void updateIgnorance(MapRepresentation otherMap) {
+		// Updates the information about the owner's supposed ignorance
+		this.diffNodes = otherMap.getNbNodes() - this.g.getNodeCount();
+		this.diffEdge = otherMap.getNbEdges() - this.g.getEdgeCount();
 	}
 }
