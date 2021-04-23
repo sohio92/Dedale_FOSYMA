@@ -115,6 +115,7 @@ public class ExploCoopBehaviour extends SimpleBehaviour {
 			if (!this.myMap.hasOpenNode()){
 				//Explo finished
 				remove_yellow_page();
+				this.myAgent.addBehaviour(new ChassB(this.myAgent,this.myMap));
 				finished=true;
 				System.out.println(this.myAgent.getLocalName()+" - Exploration successufully done, behaviour removed.");
 			}else{

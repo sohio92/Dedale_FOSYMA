@@ -314,6 +314,23 @@ public class MapRepresentation implements Serializable {
 				.findAny()).isPresent();
 	}
 
+	public SerializableSimpleGraph<String, MapAttribute> getSg(){
+		this.sg= new SerializableSimpleGraph<String,MapAttribute>();
+		Iterator<Node> iter=this.g.iterator();
+		while(iter.hasNext()){
+			Node n=iter.next();
+			sg.addNode(n.getId(),MapAttribute.valueOf((String)n.getAttribute("ui.class")));
+		}
+		Iterator<Edge> iterE=this.g.edges().iterator();
+		while (iterE.hasNext()){
+			Edge e=iterE.next();
+			Node sn=e.getSourceNode();
+			Node tn=e.getTargetNode();
+			sg.addEdge(e.getId(), sn.getId(), tn.getId());
+		} 
+		return this.sg;
+	}
+
 
 
 

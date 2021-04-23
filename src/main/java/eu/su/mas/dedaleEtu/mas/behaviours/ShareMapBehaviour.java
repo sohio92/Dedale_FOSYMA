@@ -60,6 +60,7 @@ public class ShareMapBehaviour extends TickerBehaviour{
 		try {
 			if (list_of_agent("Not_Explo").size() == 0){
 				System.out.println("YOUPIIIIIIII");
+				stop();
 			}
 		} catch (FIPAException e1) {
 			// TODO Auto-generated catch block
