@@ -1,4 +1,4 @@
-package CustomBehaviour;
+package customBehaviours;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,8 +11,10 @@ import dataStructures.serializableGraph.SerializableSimpleGraph;
 import dataStructures.tuple.Couple;
 
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
+import eu.su.mas.dedaleEtu.mas.knowledge.AgentKnowledge;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
+import eu.su.mas.dedaleEtu.mas.knowledge.PingContainer;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreMultiAgent;
 import jade.core.AID;
 import jade.core.Agent;
@@ -30,11 +32,9 @@ public class ListenBehaviour extends CyclicBehaviour{
 	private static final long serialVersionUID = -2058134622078011998L;
 	
 	private int maxRange = 4; // Maximum range of surroundings
-	private List<String> receivers;
-	
+
 	public ListenBehaviour (final Agent myagent) {		
 		this.myAgent = myagent;
-		this.receivers = ((ExploreMultiAgent)this.myAgent).getAgentsNames();
 	}
 	
 	@Override
@@ -59,8 +59,6 @@ public class ListenBehaviour extends CyclicBehaviour{
 		
 		// Handling of the content
 		if (msgReceived != null && compareNames != 0) {
-			
-			
 			// Let other behaviours know that an agent was found at the known position
 			if (msgReceived.getProtocol().equals("PingProtocol")) {
 				this.pingProcess(otherName, msgReceived);
@@ -77,8 +75,15 @@ public class ListenBehaviour extends CyclicBehaviour{
 	}
 	
 	private void pingProcess(String otherName, ACLMessage msgReceived) {
-		String otherPosition = msgReceived.getContent();
-		((ExploreMultiAgent)this.myAgent).addAgentsAround(otherName, otherPosition, msgReceived.getPostTimeStamp());
+		AgentKnowledge otherKnowledge = ((ExploreMultiAgent)this.myAgent).getBrain().getAgentsKnowledge().get(otherName);
+		// Unpacks the message and checks if it is relevant
+		if (otherKnowledge.unpackMessage(msgReceived) == true) {
+			((ExploreMultiAgent)this.myAgent).sayConsole("Got a position! " + otherKnowledge.getLastPosition());
+			((ExploreMultiAgent)this.myAgent).checkAgentAround(otherName, otherKnowledge.getLastPosition(), this.maxRange);	
+		};
+		
+		MapRepresentation map = ((ExploreMultiAgent)this.myAgent).getBrain().getMap();
+		map.fuseMap(otherKnowledge.getMap().getSg());
 	}
 	
 	private void shareMapProcess(String otherName, ACLMessage msgReceived, boolean meeting) {

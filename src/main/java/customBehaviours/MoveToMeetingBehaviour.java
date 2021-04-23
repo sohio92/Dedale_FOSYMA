@@ -1,4 +1,4 @@
-package CustomBehaviour;
+package customBehaviours;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +25,7 @@ public class MoveToMeetingBehaviour extends SimpleBehaviour {
 	private ArrayList<String> participants;
 	
 	private String myPosition;
+	private String lastPosition = "";
 	private String meetingPlace;
 	
 	public MoveToMeetingBehaviour(final Agent myagent, MapRepresentation myMap, ArrayList<String> participants) {
@@ -54,9 +55,17 @@ public class MoveToMeetingBehaviour extends SimpleBehaviour {
 	
 	@Override
 	public void action() {
+		this.myPosition = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
+		
+		// Terminates if stuck
+		if (this.lastPosition.equals(this.myPosition)) {
+			((ExploreMultiAgent)this.myAgent).sayConsole("I arrived at the meeting place.");
+			this.finished = true;
+		}
+		this.lastPosition = this.myPosition;
+		
 		// Compute the path to the meeting place
 		List<String> path = new ArrayList<String>();
-		this.myPosition = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 		try {
 			path = this.myMap.getShortestPath(this.myPosition, this.meetingPlace);
 		} catch (java.lang.NullPointerException e) {
@@ -71,26 +80,8 @@ public class MoveToMeetingBehaviour extends SimpleBehaviour {
 		} else {
 			// Move towards the destination
 			String nextNode = path.get(0);
-			
-			try {
-				((ExploreMultiAgent)this.myAgent).setIntention(nextNode);
-				((AbstractDedaleAgent)this.myAgent).moveTo(nextNode);
-				
-				// Terminates if stuck
-				String newPosition = ((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
-				if (myPosition.equals(newPosition)) {
-					((ExploreMultiAgent)this.myAgent).sayConsole("I arrived at the meeting place.");
-					this.finished = true;
-				}
-				this.myPosition = newPosition;	
-			} catch(java.lang.RuntimeException e) {
-				// Tried to reach an illegal position (? cause unknown)
-				((ExploreMultiAgent)this.myAgent).sayConsole(this.myPosition + "  " + nextNode);
-				e.printStackTrace();
-				this.finished = true;
-			}
+			((ExploreMultiAgent)this.myAgent).moveToIntention(nextNode, nextNode);
 		}
-
 	}
 
 	@Override

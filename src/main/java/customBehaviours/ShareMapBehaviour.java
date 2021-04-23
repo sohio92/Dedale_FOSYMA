@@ -1,4 +1,4 @@
-package CustomBehaviour;
+package customBehaviours;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,8 +51,7 @@ public class ShareMapBehaviour extends SimpleBehaviour{
 	 * @param myagent the agent who posses the behaviour
 	 *  
 	 */
-	public ShareMapBehaviour (final Agent myagent, MapRepresentation myMap,
-			ArrayList<String> openNodes, HashSet<String> closedNodes, ArrayList<String> receivers, int minReceivers) {
+	public ShareMapBehaviour (final Agent myagent, MapRepresentation myMap, ArrayList<String> receivers, int minReceivers) {
 		this.myAgent = myagent;
 		this.myMap = myMap;
 		this.receivers = receivers;

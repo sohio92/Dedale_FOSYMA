@@ -1,4 +1,4 @@
-package CustomBehaviour;
+package customBehaviours;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -25,8 +25,6 @@ public class ConfirmMeetingBehaviour extends SimpleBehaviour {
 		this.myAgent = myagent;
 		this.participants = participants;
 		this.minParticipants = minParticipants;
-		
-		// Maybe add a waiting time?
 	}
 	
 	public void onStart() {
