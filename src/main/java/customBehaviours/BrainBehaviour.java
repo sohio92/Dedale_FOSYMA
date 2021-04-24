@@ -46,20 +46,28 @@ public class BrainBehaviour extends FSMBehaviour {
 		this.decisionToInt.put("Decision", 0);
 		this.decisionToInt.put("Exploration", 1);
 		this.decisionToInt.put("Meeting", 2);
+		this.decisionToInt.put("ShareMap", 3);
 	}
 	
 	public void onStart() {
 		this.registerFirstState(new DecisionBehaviour(this), "Decision");
 		this.registerState(new ExploMultiBehaviour(this), "Exploration");
 		this.registerState(new MeetingBehaviour(this), "Meeting");
+		this.registerState(new ShareMapBehaviour(this), "ShareMap");
 		
 		this.registerTransition("Decision", "Decision", (int) this.decisionToInt.get("Decision"));
 		
+		// Exploration transitions
 		this.registerTransition("Decision", "Exploration", (int) this.decisionToInt.get("Exploration"));
 		this.registerTransition("Exploration", "Decision", (int) this.decisionToInt.get("Decision"));
 		
+		// Meeting transitions
 		this.registerTransition("Decision", "Meeting", (int) this.decisionToInt.get("Meeting"));
 		this.registerTransition("Meeting", "Decision", (int) this.decisionToInt.get("Decision"));
+		
+		// Communication transitions
+		this.registerTransition("Decision", "ShareMap", (int) this.decisionToInt.get("ShareMap"));
+		this.registerTransition("ShareMap", "Decision", (int) this.decisionToInt.get("Decision"));
 	}
 	
 	/*

@@ -19,6 +19,7 @@ import org.graphstream.ui.view.Viewer;
 import org.graphstream.ui.view.Viewer.CloseFramePolicy;
 
 import dataStructures.serializableGraph.*;
+import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import javafx.application.Platform;
 
 /**
@@ -313,6 +314,7 @@ public class MapRepresentation implements Serializable {
 		for (SerializableNode<String, MapAttribute> n : otherNodes) {
 			for (String s : otherSg.getEdges(n.getNodeId())) {
 				if (!mySg.getEdges(n.getNodeId()).contains(s) && s != null) {
+					if (!missingSg.getAllNodes().contains(s)) missingSg.addNode(s);
 					missingSg.addEdge(nbEd.toString(), n.getNodeId(), s);
 					mySg.addEdge(nbEd.toString(), n.getNodeId(), s);
 					nbEd++;
@@ -321,6 +323,14 @@ public class MapRepresentation implements Serializable {
 		}
 
 		return missingSg;
+	}
+	
+	public void updateWithPath(List<String> otherPath) {
+		for (int i=0; i<otherPath.size()-1; i++) {
+			this.addNode(otherPath.get(i), MapAttribute.open);
+			this.addNode(otherPath.get(i+1), MapAttribute.open);
+			this.addEdge(otherPath.get(i), otherPath.get(i+1));
+		}
 	}
 	
 	public int getNbNodes() {

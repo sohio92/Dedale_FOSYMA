@@ -1,6 +1,7 @@
 package customBehaviours;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,37 +23,31 @@ import jade.core.behaviours.SimpleBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 
-public class ShareMapBehaviour extends OneShotBehaviour{
+public class SharePathBehaviour extends OneShotBehaviour{
 
 	/**
 	 * Sends my map to the other agents
 	 */
 	
 	
-	private static final long serialVersionUID = -2058134622078521998L;
+	private static final long serialVersionUID = -2058101622078521998L;
 	
-	/**
-	 * Map which is going to be shared
-	 */
-	private MapRepresentation myMap;
 	
 	/**
 	 * List of other agents
 	 */
 	private HashSet<String> receivers;
-	
 	private BrainBehaviour brain;
 	
-	public ShareMapBehaviour (BrainBehaviour brain) {
+	public SharePathBehaviour (BrainBehaviour brain) {
 		this.myAgent = brain.getAgent();
-		this.myMap = brain.getMap();
 		this.brain = brain;
 		
 		this.receivers = ((ExploreMultiAgent)this.myAgent).getAgentsNames();
 	}
 	
 	public void onStart() {
-		((ExploreMultiAgent)this.myAgent).sayConsole("I'm going to send my map to my friends.");
+		((ExploreMultiAgent)this.myAgent).sayConsole("I'm going to send my current path to my friends.");
 	}
 	
 	@Override
@@ -63,21 +58,17 @@ public class ShareMapBehaviour extends OneShotBehaviour{
 			msg.setSender(this.myAgent.getAID());
 			
 			msg.addReceiver(new AID(otherAgent, AID.ISLOCALNAME));
-			msg.setProtocol("ShareMapProtocol");
-			
-			// Retrieve what the other agent is missing
-			MapRepresentation otherMap = ((ExploreMultiAgent)this.myAgent).getMyKnowledge(otherAgent).map;
-			SerializableSimpleGraph<String, MapAttribute> missingSg = otherMap.getMissingFromMap(this.myMap);
-			
+			msg.setProtocol("SharePathProtocol");
+						
 			try {
-				msg.setContentObject(missingSg);
+				msg.setContentObject((Serializable) this.brain.getLastPath());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
 			// Send the Message
-			//((ExploreMultiAgent)this.myAgent).sayConsole("I'm sending my map to " + otherAgent);
+			//((ExploreMultiAgent)this.myAgent).sayConsole("I'm sending my current path " + (Serializable) this.brain.getLastPath() + "to " + otherAgent);
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 		}
 	}
@@ -86,7 +77,7 @@ public class ShareMapBehaviour extends OneShotBehaviour{
 	public int onEnd() {
 		HashMap<String, Integer> decisionToInt = this.brain.getDecisionToInt();
 		
-		this.brain.registerState(new ShareMapBehaviour(this.brain), "ShareMap");
+		this.brain.registerState(new SharePathBehaviour(this.brain), "ShareMap");
 		
 		this.brain.registerTransition("Decision", "ShareMap", (int) decisionToInt.get("ShareMap"));
 		this.brain.registerTransition("ShareMap", "Decision", (int) decisionToInt.get("Decision"));

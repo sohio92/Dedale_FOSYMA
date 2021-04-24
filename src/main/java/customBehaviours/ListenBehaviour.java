@@ -63,10 +63,15 @@ public class ListenBehaviour extends CyclicBehaviour{
 			if (msgReceived.getProtocol().equals("PingProtocol")) {
 				this.pingProcess(otherName, msgReceived);
 			}
+			// Update the knowledge of the agent's future path
+			else if (msgReceived.getProtocol().equals("SharePathProtocol")) {
+				((ExploreMultiAgent)this.myAgent).sayConsole("I received a " + msgReceived.getProtocol() + " message from " + otherName);
+				this.sharePathProcess(otherName, msgReceived);
+			}
 			// Update our map
 			else if (msgReceived.getProtocol().equals("ShareMapProtocol")) {
 				((ExploreMultiAgent)this.myAgent).sayConsole("I received a " + msgReceived.getProtocol() + " message from " + otherName);
-				this.shareMapProcess(otherName, msgReceived, meeting);
+				this.shareMapProcess(otherName, msgReceived);
 			}
 		}
 		
@@ -78,7 +83,7 @@ public class ListenBehaviour extends CyclicBehaviour{
 		AgentKnowledge otherKnowledge = ((ExploreMultiAgent)this.myAgent).getBrain().getAgentsKnowledge().get(otherName);
 		// Unpacks the message and checks if it is relevant
 		if (otherKnowledge.unpackMessage(msgReceived) == true) {
-			((ExploreMultiAgent)this.myAgent).sayConsole("Got a position! " + otherKnowledge.getLastPosition());
+			//((ExploreMultiAgent)this.myAgent).sayConsole(otherName + "'s last known position is " + otherKnowledge.getLastPosition());
 			((ExploreMultiAgent)this.myAgent).checkAgentAround(otherName, otherKnowledge.getLastPosition(), this.maxRange);	
 		};
 		
@@ -86,13 +91,20 @@ public class ListenBehaviour extends CyclicBehaviour{
 		map.fuseMap(otherKnowledge.getMap().getSg());
 	}
 	
-	private void shareMapProcess(String otherName, ACLMessage msgReceived, boolean meeting) {
-		// We now have communicated with the agent -> Acknowledge
-		if (meeting == true) {
-			((ExploreMultiAgent)this.myAgent).addAlreadyCommunicated(otherName);
-		}
-		
-		// We update our map (even if no meeting, we might be scraping another one)
+	private void sharePathProcess(String otherName, ACLMessage msgReceived) {
+		List<String> lastPath;
+		try {
+			lastPath = (List<String>) msgReceived.getContentObject();
+			
+			((ExploreMultiAgent)this.myAgent).getMyKnowledge(otherName).addNewPath(lastPath);
+			((ExploreMultiAgent)this.myAgent).getBrain().getMap().updateWithPath(lastPath);
+			
+			((ExploreMultiAgent)this.myAgent).sayConsole("I know that " + otherName + " will follow this path : " + lastPath);
+		} catch (UnreadableException e) {e.printStackTrace();}
+	}
+	
+	private void shareMapProcess(String otherName, ACLMessage msgReceived) {
+		// We update our map
 		SerializableSimpleGraph<String, MapAttribute> otherSg;
 		try {
 			otherSg = (SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject();

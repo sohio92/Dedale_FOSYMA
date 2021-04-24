@@ -154,7 +154,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		}
 		for (int i=0; i<agentsDescriptionCatalog.length; i++){
 			AID agentID = agentsDescriptionCatalog[i].getName();
-			agentsNames.add(agentID.getLocalName());
+			if (!agentID.getLocalName().equals(this.getAID().getLocalName()))	agentsNames.add(agentID.getLocalName());
 		}
 		return agentsNames;
 	}
@@ -195,9 +195,11 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 				}
 			}
 		} catch (java.lang.IndexOutOfBoundsException e) {
-			this.sayConsole(newAgent + " is not reachable");
+			//this.sayConsole(newAgent + " is not reachable");
 		} catch (java.lang.NullPointerException e) {
-			
+			// node is not yet in map
+			// missing node is added later in the listening process
+			//this.sayConsole(newAgent + " is not reachable");
 		}
 	}
 	

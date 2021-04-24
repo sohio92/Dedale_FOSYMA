@@ -27,7 +27,7 @@ public class AgentKnowledge implements Serializable{
 	private List<String> lastPath;
 	
 	
-	private boolean wantToMeet = false; // Does the agent wants to meet me?
+	private double meetUtility = 0; // How much do you want to meet me ?
 	
 	public AgentKnowledge(String name) {
 		this.name = name;
@@ -45,25 +45,15 @@ public class AgentKnowledge implements Serializable{
 			
 			try {
 				PingContainer content = (PingContainer) newMessage.getContentObject();
-				this.lastPath = content.getLastPath();
 				
 				if (recentMessage == true) {
 					this.lastAction = content.getLastAction();
 					this.lastPosition = content.getLastPosition();
-					this.wantToMeet = content.isWantToMeet();
+					this.meetUtility = content.getMeetUtility();
 				}
 				
-				if (!map.hasNode(lastPosition)) {
-					map.addNode(lastPosition, MapAttribute.open);
-				}
-				
-				if (!this.lastPath.equals("")) {
-					System.out.println("TESTTLSTM");
-					for (int i=0; i<this.lastPath.size()-1; i++) {
-						this.map.addNode(this.lastPath.get(i), MapAttribute.open);
-						this.map.addNode(this.lastPath.get(i+1), MapAttribute.open);
-						this.map.addEdge(this.lastPath.get(i), this.lastPath.get(i+1));
-					}
+				if (!this.map.hasNode(lastPosition)) {
+					this.map.addNode(lastPosition, MapAttribute.open);
 				}
 			} catch (UnreadableException e) {e.printStackTrace();}
 			
@@ -74,6 +64,11 @@ public class AgentKnowledge implements Serializable{
 		return recentMessage;
 	}
 	
+	// Adds a new last known path
+	public void addNewPath(List<String> newPath) {
+		this.map.updateWithPath(newPath);
+		this.setLastPath(newPath);
+	}
 	/*
 	 * Getters and setters
 	 */
@@ -122,14 +117,6 @@ public class AgentKnowledge implements Serializable{
 		this.mostRecentPing = mostRecentPing;
 	}
 
-	public boolean isWantToMeet() {
-		return wantToMeet;
-	}
-
-	public void setWantToMeet(boolean wantToMeet) {
-		this.wantToMeet = wantToMeet;
-	}
-
 	public List<String> getLastPath() {
 		return lastPath;
 	}
@@ -140,5 +127,17 @@ public class AgentKnowledge implements Serializable{
 	
 	public MapRepresentation getMap() {
 		return this.map;
+	}
+
+	public double getMeetUtility() {
+		return meetUtility;
+	}
+
+	public void setMeetUtility(double utility) {
+		this.meetUtility = utility;
+	}
+	
+	public void addMeetUtility(double moreUtility) {
+		this.meetUtility += moreUtility;
 	}
 }

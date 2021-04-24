@@ -3,9 +3,11 @@ package customBehaviours;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.lang.Math;
 import java.util.Random;
 
+import eu.su.mas.dedaleEtu.mas.knowledge.AgentKnowledge;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreMultiAgent;
 import jade.core.behaviours.OneShotBehaviour;
@@ -30,6 +32,9 @@ public class DecisionBehaviour extends OneShotBehaviour {
 	// Information about my environment
 	private HashSet<String> whoWantsToMeet;	
 	
+	// Agents that I want to meet
+	private HashSet<String> interestingAgents = new HashSet<String>();
+	
 	public DecisionBehaviour(BrainBehaviour brain){
 		this.brain = brain;
 		
@@ -53,17 +58,16 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		}
 
 	}
-	
+
 	// Retrieve the information necessary to take a decision
 	private void retrieveInformation() {
 		// Who wants to meet me?
 		this.whoWantsToMeet = new HashSet<String>();
 		for (String otherAgent: this.agentsAround) {
-			if (this.brain.getAgentsKnowledge().get(otherAgent).isWantToMeet() == true) {
+			if (this.brain.getAgentsKnowledge().get(otherAgent).getMeetUtility() > 0) {
 				this.whoWantsToMeet.add(otherAgent);
 			}
-		}
-		
+		}		
 		// Check golem		
 	}
 
@@ -72,28 +76,36 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		// Start the decision process, default behavior is exploration
 		String decision = "Exploration";
 		
-		// Get the agents who are worth sharing with
-		HashSet<String> interestingAgents = new HashSet<String>();
-		for (String otherAgent: this.agentsAround) {
-			if (this.shareWorth(10, otherAgent)) {interestingAgents.add(otherAgent);}
-			else {((ExploreMultiAgent)this.myAgent).sayConsole("I considered " + otherAgent + " but it is not worth it.");}
+		// Sending my current path if there are agents around me
+		if (this.agentsAround.size() >= 1)	this.myAgent.addBehaviour(new SharePathBehaviour(this.brain));
+		
+		// Sending my map to the agents who are interested around me
+		//if (this.whoWantsToMeet.size() > 0)	this.myAgent.addBehaviour(new ShareMapBehaviour(this.brain));
+		
+		// Get the agents who I want to share with
+		this.interestingAgents = new HashSet<String>();
+		for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
+			double shareWorth = this.shareWorth(otherKnowledge);
+			if (shareWorth >= 10) {
+				this.interestingAgents.add(otherKnowledge.getName());
+				otherKnowledge.setMeetUtility(shareWorth);
+			} else	((ExploreMultiAgent)this.myAgent).sayConsole("I considered " + otherKnowledge.getName() + " but it is not worth it.");
 		}
 		
 		// Start a meeting with the interesting agents
-		//if (interestingAgents.size() != 0) {decision = "Meeting";}
+		//if (this.interestingAgents.size() != 0)	decision = "Meeting";
 					
 		return decision;
 	}
 	
 	// Returns true if it is worth sharing a map with the otherAgent, considering if it wants to talk with me or not
-	public boolean shareWorth(int threshold, String otherAgent) {	
-		MapRepresentation otherMap = ((ExploreMultiAgent)this.myAgent).getMyKnowledge(otherAgent).map;
+	public double shareWorth(AgentKnowledge otherAgent) {	
+		MapRepresentation otherMap = otherAgent.map;
 		
 		double utility = Math.floor(otherMap.getDiffEdges()/2) + otherMap.getDiffNodes();
-		if (this.whoWantsToMeet.contains(otherAgent)) {
-			utility *= 2;
-		}
-		return utility >= threshold;
+		if (this.whoWantsToMeet.contains(otherAgent.getName()))	utility *= 2;
+	
+		return utility;
 	}
 	
 	// Manages the case where agents are stuck

@@ -22,18 +22,14 @@ public class PingContainer implements Serializable {
 	// My last action
 	private String lastAction;
 	
-	// My last path
-	private List<String> lastPath;
-	
 	// Do I want to meet you?
-	private boolean wantToMeet;
+	private double meetUtility;
 	
 	public PingContainer(ExploreMultiAgent myAgent, String otherAgent) {
 		this.setLastPosition(myAgent.getCurrentPosition());
 		
-		this.setLastPath(myAgent.getBrain().getLastPath());
 		this.setLastAction(myAgent.getBrain().getLastDecision());
-		this.setWantToMeet(myAgent.getBrain().getAgentsKnowledge().get(otherAgent).isWantToMeet());
+		this.setMeetUtility(myAgent.getBrain().getAgentsKnowledge().get(otherAgent).getMeetUtility());
 	}
 
 	public String getLastPosition() {
@@ -52,19 +48,11 @@ public class PingContainer implements Serializable {
 		this.lastAction = lastAction;
 	}
 
-	public boolean isWantToMeet() {
-		return wantToMeet;
+	public double getMeetUtility() {
+		return meetUtility;
 	}
 
-	public void setWantToMeet(boolean wantToMeet) {
-		this.wantToMeet = wantToMeet;
-	}
-
-	public List<String> getLastPath() {
-		return lastPath;
-	}
-
-	public void setLastPath(List<String> lastPath) {
-		this.lastPath = lastPath;
+	public void setMeetUtility(double meetUtility) {
+		this.meetUtility = meetUtility;
 	}
 }

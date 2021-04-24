@@ -1,6 +1,7 @@
 package customBehaviours;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -120,7 +121,12 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 						this.myMap.addEdge(myPosition, nodeId);
 					}
 					((ExploreMultiAgent)this.myAgent).addDiffEdges(1);
-					if (nextNode==null) nextNode=nodeId;
+					// If there exists an open node directly reachable, go for it
+					if (nextNode==null) {
+						nextNode=nodeId;
+						nextPath.add(myPosition);
+						nextPath.add(nextNode);
+					}
 				}
 			}
 
@@ -130,16 +136,34 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 			}else{
 				//4) select next move.
 				//4.1 If there exist one open node directly reachable, go for it,
-				//	 otherwise choose one from the openNode list, compute the shortestPath and go for it
+				//	 otherwise choose the closest node from the openNode list and go for it
 				if (this.nextNode==null){
 					//no directly accessible openNode
 					//chose one, compute the path and take the first step.
-					try {
-						nextPath = this.myMap.getShortestPath(myPosition, this.openNodes.get(0));
-						this.nextNode = nextPath.get(0);
-					} catch(java.lang.IndexOutOfBoundsException | java.lang.NullPointerException e){
-						this.nextNode = myPosition;
+					ArrayList<List<String>> paths = new ArrayList<List<String>>();
+					ArrayList<Integer> openDistances = new ArrayList<Integer>();
+					for (int i = 0; i < this.openNodes.size(); i++) {
+						try {
+							paths.add(this.myMap.getShortestPath(myPosition, this.openNodes.get(i)));
+							openDistances.add(paths.get(-1).size());
+						} catch (java.lang.IndexOutOfBoundsException | java.lang.NullPointerException e) {
+							paths.add(Arrays.asList(myPosition));
+							openDistances.add(Integer.MAX_VALUE);
+						}
 					}
+					
+					int minDistance = Integer.MAX_VALUE;
+					int index = 0;
+					for (int i = 0; i < this.openNodes.size(); i++) {
+						int newDistance = openDistances.get(i);
+						if (newDistance <= minDistance) {
+							minDistance = newDistance;
+							index = i;
+						}
+					}
+					
+					nextPath = paths.get(index);
+					this.nextNode = nextPath.get(0);
 				}
 
 				//list of observations associated to the currentPosition
@@ -155,7 +179,11 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 
 	@Override
 	public int onEnd() {
-		this.brain.reset();
+		this.brain.registerState(new ExploMultiBehaviour(this.brain), "Exploration");
+		
+		this.brain.registerTransition("Decision", "Exploration", (int) this.decisionToInt.get("Exploration"));
+		this.brain.registerTransition("Exploration", "Decision", (int) this.decisionToInt.get("Decision"));
+		
 		return this.decisionToInt.get("Decision");
 	}
 }
