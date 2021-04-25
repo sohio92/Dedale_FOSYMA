@@ -25,6 +25,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 	private HashMap<String, Integer> decisionToInt;
 	
 	private BrainBehaviour brain;
+	private ExploreMultiAgent myAgent;
 	
 	// Agents around me
 	private HashSet<String> agentsAround;
@@ -33,7 +34,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 	private HashSet<String> whoWantsToMeet;	
 	
 	// Agents that I want to meet
-	private HashSet<String> interestingAgents = new HashSet<String>();
+	private ArrayList<AgentKnowledge> interestingAgents = new ArrayList<AgentKnowledge>();
 	
 	public DecisionBehaviour(BrainBehaviour brain){
 		this.brain = brain;
@@ -47,7 +48,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 
 		this.agentsAround = ((ExploreMultiAgent)this.myAgent).getAgentsAround();
 		if (this.agentsAround.size() != 0) {
-			((ExploreMultiAgent)this.myAgent).sayConsole("The other agents in my surroundings are : " + this.agentsAround);
+			//((ExploreMultiAgent)this.myAgent).sayConsole("The other agents in my surroundings are : " + this.agentsAround);
 		}
 		
 		this.retrieveInformation();
@@ -61,14 +62,22 @@ public class DecisionBehaviour extends OneShotBehaviour {
 
 	// Retrieve the information necessary to take a decision
 	private void retrieveInformation() {
+		// How far are the other agents?
+		for (AgentKnowledge otherAgent : this.brain.getAgentsKnowledge().values()) {
+			otherAgent.computeDistance(this.brain.getMap(), this.myAgent.getCurrentPosition());
+		}
+		
 		// Who wants to meet me?
 		this.whoWantsToMeet = new HashSet<String>();
 		for (String otherAgent: this.agentsAround) {
 			if (this.brain.getAgentsKnowledge().get(otherAgent).getMeetUtility() > 0) {
 				this.whoWantsToMeet.add(otherAgent);
 			}
-		}		
-		// Check golem		
+		}
+		
+		// Check golem
+		
+		//
 	}
 
 	// Takes a decision based on surroundings
@@ -76,33 +85,35 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		// Start the decision process, default behavior is exploration
 		String decision = "Exploration";
 		
+		// Maybe send them more to the most interested agents?
 		// Sending my current path if there are agents around me
-		if (this.agentsAround.size() >= 1)	this.myAgent.addBehaviour(new SharePathBehaviour(this.brain));
+		//if (this.agentsAround.size() >= 1)	this.myAgent.addBehaviour(new SharePathBehaviour(this.brain));
 		
 		// Sending my map to the agents who are interested around me
-		//if (this.whoWantsToMeet.size() > 0)	this.myAgent.addBehaviour(new ShareMapBehaviour(this.brain));
-		
+		if (this.whoWantsToMeet.size() > 0)	this.myAgent.addBehaviour(new ShareMapBehaviour(this.brain, this.whoWantsToMeet));
+
 		// Get the agents who I want to share with
-		this.interestingAgents = new HashSet<String>();
+		this.interestingAgents = new ArrayList<AgentKnowledge>();
 		for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
-			double shareWorth = this.shareWorth(otherKnowledge);
-			if (shareWorth >= 10) {
-				this.interestingAgents.add(otherKnowledge.getName());
-				otherKnowledge.setMeetUtility(shareWorth);
-			} else	((ExploreMultiAgent)this.myAgent).sayConsole("I considered " + otherKnowledge.getName() + " but it is not worth it.");
+			double shareWorth = otherKnowledge.getShareWorth();
+			if (shareWorth >= 2) {
+				this.interestingAgents.add(otherKnowledge);
+			} //else	((ExploreMultiAgent)this.myAgent).sayConsole("I considered " + otherKnowledge.getName() + " but it is not worth it.");
+
 		}
+		this.brain.setInterestingAgents(this.interestingAgents);
+	
+		//((ExploreMultiAgent)this.myAgent).sayConsole("I want to meet : " + this.interestingAgents);
 		
 		// Start a meeting with the interesting agents
-		//if (this.interestingAgents.size() != 0)	decision = "Meeting";
+		//if (this.interestingAgents.size() != 0)	decision = "SeekMeeting";
 					
 		return decision;
 	}
 	
 	// Returns true if it is worth sharing a map with the otherAgent, considering if it wants to talk with me or not
 	public double shareWorth(AgentKnowledge otherAgent) {	
-		MapRepresentation otherMap = otherAgent.map;
-		
-		double utility = Math.floor(otherMap.getDiffEdges()/2) + otherMap.getDiffNodes();
+		double utility = otherAgent.getShareWorth();
 		if (this.whoWantsToMeet.contains(otherAgent.getName()))	utility *= 2;
 	
 		return utility;

@@ -118,20 +118,23 @@ public class MapRepresentation implements Serializable {
 	 * @param idNode1 one side of the edge
 	 * @param idNode2 the other side of the edge
 	 */
-	public void addEdge(String idNode1,String idNode2){
+	public boolean addEdge(String idNode1,String idNode2){
 		try {
 			this.nbEdges++;
 			this.g.addEdge(this.nbEdges.toString(), idNode1, idNode2);
 			this.sg.addEdge(this.nbEdges.toString(), idNode1, idNode2);
+			return true;
 		}catch (IdAlreadyInUseException e1) {
 			System.err.println("ID existing");
 			System.exit(1);
 		}catch (EdgeRejectedException e2) {
 			//System.err.println("ajout arrete echoué "+e);
 			this.nbEdges--;
+			return false;
 		} catch(ElementNotFoundException e3){
 			
 		}
+		return false;
 	}	
 	/**
 	 * Fuse two maps together
@@ -298,7 +301,7 @@ public class MapRepresentation implements Serializable {
 		SerializableSimpleGraph<String, MapAttribute> missingSg = new SerializableSimpleGraph<String, MapAttribute>();
 		SerializableSimpleGraph<String, MapAttribute> otherSg = otherMap.getSg();
 		SerializableSimpleGraph<String, MapAttribute> mySg = this.getSg(); // Temporary copy of this.sg
-		
+		System.out.println(otherMap.ownerName + this.ownerName);
 
 		// Adding the missing nodes
 		Set<SerializableNode<String, MapAttribute>> otherNodes = otherSg.getAllNodes();
@@ -314,7 +317,7 @@ public class MapRepresentation implements Serializable {
 		for (SerializableNode<String, MapAttribute> n : otherNodes) {
 			for (String s : otherSg.getEdges(n.getNodeId())) {
 				if (!mySg.getEdges(n.getNodeId()).contains(s) && s != null) {
-					if (!missingSg.getAllNodes().contains(s)) missingSg.addNode(s);
+					if (!missingSg.getAllNodes().toString().contains(s)) missingSg.addNode(s);
 					missingSg.addEdge(nbEd.toString(), n.getNodeId(), s);
 					mySg.addEdge(nbEd.toString(), n.getNodeId(), s);
 					nbEd++;

@@ -31,10 +31,11 @@ public class ListenBehaviour extends CyclicBehaviour{
 	 */
 	private static final long serialVersionUID = -2058134622078011998L;
 	
-	private int maxRange = 4; // Maximum range of surroundings
+	private int maxRange; // Maximum range of surroundings
 
 	public ListenBehaviour (final Agent myagent) {		
 		this.myAgent = myagent;
+		this.maxRange = ((ExploreMultiAgent)this.myAgent).getMaxRange();
 	}
 	
 	@Override
@@ -45,49 +46,46 @@ public class ListenBehaviour extends CyclicBehaviour{
 		}
 	}
 	
-	private void listen() {
-		// Is the agent in a meeting
-		boolean meeting = ((ExploreMultiAgent)this.myAgent).getOnGoingMeeting();
-		
+	private void listen() {		
 		// Receiving a message
 		final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);			
 		final ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
-
-		// Checking if the received message is an echo
-		String otherName = msgReceived.getSender().getLocalName();
-		final int compareNames = otherName.compareTo(this.myAgent.getAID().getLocalName());
 		
-		// Handling of the content
-		if (msgReceived != null && compareNames != 0) {
-			// Let other behaviours know that an agent was found at the known position
-			if (msgReceived.getProtocol().equals("PingProtocol")) {
-				this.pingProcess(otherName, msgReceived);
-			}
-			// Update the knowledge of the agent's future path
-			else if (msgReceived.getProtocol().equals("SharePathProtocol")) {
-				((ExploreMultiAgent)this.myAgent).sayConsole("I received a " + msgReceived.getProtocol() + " message from " + otherName);
-				this.sharePathProcess(otherName, msgReceived);
-			}
-			// Update our map
-			else if (msgReceived.getProtocol().equals("ShareMapProtocol")) {
-				((ExploreMultiAgent)this.myAgent).sayConsole("I received a " + msgReceived.getProtocol() + " message from " + otherName);
-				this.shareMapProcess(otherName, msgReceived);
+		if (msgReceived != null) {
+			// Checking if the received message is an echo
+			String otherName = msgReceived.getSender().getLocalName();
+			final int compareNames = otherName.compareTo(this.myAgent.getAID().getLocalName());
+			
+			// Handling of the content
+			if (compareNames != 0) {
+				// Let other behaviours know that an agent was found at the known position
+				if (msgReceived.getProtocol().equals("PingProtocol")) {
+					this.pingProcess(otherName, msgReceived);
+				}
+				// Update the knowledge of the agent's future path
+				else if (msgReceived.getProtocol().equals("SharePathProtocol")) {
+					((ExploreMultiAgent)this.myAgent).sayConsole("Received a " + msgReceived.getProtocol() + " message from " + otherName);
+					this.sharePathProcess(otherName, msgReceived);
+				}
+				// Update our map
+				else if (msgReceived.getProtocol().equals("ShareMapProtocol")) {
+					((ExploreMultiAgent)this.myAgent).sayConsole("Received a " + msgReceived.getProtocol() + " message from " + otherName);
+					this.shareMapProcess(otherName, msgReceived);
+				}
 			}
 		}
-		
-		// If an agent is too far away, it is removed from the surroundings
-		((ExploreMultiAgent)this.myAgent).clearSurroundings(this.maxRange);
 	}
 	
 	private void pingProcess(String otherName, ACLMessage msgReceived) {
+		MapRepresentation map = ((ExploreMultiAgent)this.myAgent).getBrain().getMap();
 		AgentKnowledge otherKnowledge = ((ExploreMultiAgent)this.myAgent).getBrain().getAgentsKnowledge().get(otherName);
 		// Unpacks the message and checks if it is relevant
-		if (otherKnowledge.unpackMessage(msgReceived) == true) {
+		if (otherKnowledge.unpackMessage(((ExploreMultiAgent)this.myAgent).getBrain(), msgReceived) == true) {
 			//((ExploreMultiAgent)this.myAgent).sayConsole(otherName + "'s last known position is " + otherKnowledge.getLastPosition());
-			((ExploreMultiAgent)this.myAgent).checkAgentAround(otherName, otherKnowledge.getLastPosition(), this.maxRange);	
+			otherKnowledge.computeDistance(map, ((ExploreMultiAgent)this.myAgent).getCurrentPosition());
+			((ExploreMultiAgent)this.myAgent).checkAgentAround(otherName, this.maxRange);	
 		};
 		
-		MapRepresentation map = ((ExploreMultiAgent)this.myAgent).getBrain().getMap();
 		map.fuseMap(otherKnowledge.getMap().getSg());
 	}
 	
@@ -96,19 +94,28 @@ public class ListenBehaviour extends CyclicBehaviour{
 		try {
 			lastPath = (List<String>) msgReceived.getContentObject();
 			
-			((ExploreMultiAgent)this.myAgent).getMyKnowledge(otherName).addNewPath(lastPath);
-			((ExploreMultiAgent)this.myAgent).getBrain().getMap().updateWithPath(lastPath);
+			AgentKnowledge otherKnowledge = ((ExploreMultiAgent)this.myAgent).getMyKnowledge(otherName);
+			otherKnowledge.addNewPath(lastPath);
 			
-			((ExploreMultiAgent)this.myAgent).sayConsole("I know that " + otherName + " will follow this path : " + lastPath);
+			BrainBehaviour brain = ((ExploreMultiAgent)this.myAgent).getBrain();
+			brain.getMap().updateWithPath(lastPath);
+			
+			otherKnowledge.getMap().updateIgnorance(brain.getMap());
+			
+			((ExploreMultiAgent)this.myAgent).sayConsole("I know that " + otherName + " will follow : " + lastPath);
 		} catch (UnreadableException e) {e.printStackTrace();}
 	}
 	
 	private void shareMapProcess(String otherName, ACLMessage msgReceived) {
-		// We update our map
-		SerializableSimpleGraph<String, MapAttribute> otherSg;
 		try {
-			otherSg = (SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject();
-			((ExploreMultiAgent)this.myAgent).updateMap(otherName, otherSg);
+			SerializableSimpleGraph<String, MapAttribute> otherSg = (SerializableSimpleGraph<String, MapAttribute>) msgReceived.getContentObject();
+			
+			// Update my map
+			((ExploreMultiAgent)this.myAgent).getBrain().getMap().fuseMap(otherSg);
+			
+			// Update the other agent's last known map
+			((ExploreMultiAgent) this.myAgent).getBrain().getAgentsKnowledge().get(otherName)
+					.unpackMessage(((ExploreMultiAgent) this.myAgent).getBrain(), msgReceived);
 		} catch (UnreadableException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

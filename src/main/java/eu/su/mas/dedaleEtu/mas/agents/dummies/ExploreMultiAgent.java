@@ -10,9 +10,12 @@ import customBehaviours.ListenBehaviour;
 import customBehaviours.PingPositionBehaviour;
 import customBehaviours.ShareMapBehaviour;
 import dataStructures.serializableGraph.SerializableSimpleGraph;
+import dataStructures.tuple.Couple;
 
 import java.util.HashSet;
+import java.util.Iterator;
 
+import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
 import eu.su.mas.dedaleEtu.mas.knowledge.AgentKnowledge;
@@ -64,6 +67,9 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	
 	// Information about current loading state
 	private boolean loaded = false;
+	
+	// What is my surrounding's range
+	private int maxRange = 4;
 	
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -133,7 +139,6 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		this.myMap.loadSavedData();
 		for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
 			otherKnowledge.map.loadSavedData();
-			otherKnowledge.setLastPosition(this.getCurrentPosition());
 		}
 		this.loaded = true;
 	}
@@ -186,21 +191,21 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		return this.agentsAround;
 	}
 	
-	public void checkAgentAround(String newAgent, String newPosition, Integer maxDistance) {
-		try {
-			if (maxDistance >= this.myMap.getShortestPath(this.getCurrentPosition(), newPosition).size()) {
-				// Add an agent to the vicinity and updates its last position
-				if (!this.agentsAround.contains(newAgent)) {
-					this.agentsAround.add(newAgent);
-				}
+	public void checkAgentAround(String newAgent, Integer maxDistance) {
+		AgentKnowledge newKnowledge = this.getBrain().getAgentsKnowledge().get(newAgent);
+		
+		if (maxDistance >= newKnowledge.getDistance()) {
+			// Add an agent to the vicinity and updates its last position
+			if (!this.agentsAround.contains(newAgent)) {
+				this.agentsAround.add(newAgent);
 			}
-		} catch (java.lang.IndexOutOfBoundsException e) {
-			//this.sayConsole(newAgent + " is not reachable");
-		} catch (java.lang.NullPointerException e) {
-			// node is not yet in map
-			// missing node is added later in the listening process
-			//this.sayConsole(newAgent + " is not reachable");
+		} else {
+			// Removes an agent from the vicinity
+			if (this.agentsAround.contains(newAgent)) {
+				this.agentsAround.remove(newAgent);
+			}
 		}
+
 	}
 	
 	public void removeAgentsAround(String otherAgent) {
@@ -311,5 +316,63 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	public void addOpenNode(String newNode) {
 		this.myMap.addNode(newNode, MapAttribute.open);
 		this.brain.addOpenNodes(newNode);
+	}
+
+	public int getMaxRange() {
+		return maxRange;
+	}
+
+	public void setMaxRange(int maxRange) {
+		this.maxRange = maxRange;
+	}
+	
+	// Discovers environment, if there exists a directly reachable open node, returns it
+	public String discover() {
+		//List of observable from the agent's current position
+		List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this).observe();//myPosition
+		
+		/**
+		 * Just added here to let you see what the agent is doing, otherwise he will be too quick
+		 */
+		try {
+			this.doWait(500);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		String myPosition = this.getCurrentPosition();
+		MapRepresentation map = this.getBrain().getMap();
+		
+		//1) remove the current node from openlist and add it to closedNodes.
+		this.brain.addClosedNodes(myPosition);
+		this.brain.removeOpenNodes(myPosition);
+		map.addNode(myPosition,MapAttribute.closed);
+		
+		// If we are where an agent was supposed to be, then we don't know where it is anymore
+		for (AgentKnowledge otherKnowledge: this.getBrain().getAgentsKnowledge().values()) {
+			if (myPosition == otherKnowledge.getLastPosition())	otherKnowledge.setLastPosition(null);
+		}
+
+		//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
+		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
+		String nodeId = "";
+		while(iter.hasNext()){
+			nodeId=iter.next().getLeft();
+			if (!this.brain.getClosedNodes().contains(nodeId)){
+				if (!this.brain.getOpenNodes().contains(nodeId)){
+					this.brain.addOpenNodes(nodeId);
+					map.addNode(nodeId, MapAttribute.open);
+					map.addEdge(myPosition, nodeId);
+					this.addDiffNodes(1);
+				}else{
+					//the node exist, but not necessarily the edge
+					if (map.addEdge(myPosition, nodeId) == true)	this.addDiffEdges(1);
+				}
+				
+			}
+		}
+		
+		//?this.brain.fuseMap(map);
+		return nodeId;
 	}
 }

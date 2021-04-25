@@ -47,7 +47,7 @@ public class SharePathBehaviour extends OneShotBehaviour{
 	}
 	
 	public void onStart() {
-		((ExploreMultiAgent)this.myAgent).sayConsole("I'm going to send my current path to my friends.");
+		((ExploreMultiAgent)this.myAgent).sayConsole("Sending current path to my friends.");
 	}
 	
 	@Override
@@ -71,17 +71,5 @@ public class SharePathBehaviour extends OneShotBehaviour{
 			//((ExploreMultiAgent)this.myAgent).sayConsole("I'm sending my current path " + (Serializable) this.brain.getLastPath() + "to " + otherAgent);
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 		}
-	}
-	
-	@Override
-	public int onEnd() {
-		HashMap<String, Integer> decisionToInt = this.brain.getDecisionToInt();
-		
-		this.brain.registerState(new SharePathBehaviour(this.brain), "ShareMap");
-		
-		this.brain.registerTransition("Decision", "ShareMap", (int) decisionToInt.get("ShareMap"));
-		this.brain.registerTransition("ShareMap", "Decision", (int) decisionToInt.get("Decision"));
-		
-		return decisionToInt.get("Decision");
 	}
 }

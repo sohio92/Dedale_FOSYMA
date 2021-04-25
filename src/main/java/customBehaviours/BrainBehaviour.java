@@ -31,9 +31,8 @@ public class BrainBehaviour extends FSMBehaviour {
 	private boolean isStuck = false;
 	private int timeStuck = 0;
 	
-	// Current meeting's information, null if no meeting going on
-	private String meetingTopic;
-	private ArrayList<String> participants;
+	// The agents I'm interested in
+	private ArrayList<AgentKnowledge> interestingAgents;
 	
 	public BrainBehaviour (Agent myAgent, MapRepresentation myMap, HashSet<String> agentNames) {
 		this.myAgent = myAgent;
@@ -45,15 +44,14 @@ public class BrainBehaviour extends FSMBehaviour {
 		
 		this.decisionToInt.put("Decision", 0);
 		this.decisionToInt.put("Exploration", 1);
-		this.decisionToInt.put("Meeting", 2);
+		this.decisionToInt.put("SeekMeeting", 2);
 		this.decisionToInt.put("ShareMap", 3);
 	}
 	
 	public void onStart() {
 		this.registerFirstState(new DecisionBehaviour(this), "Decision");
 		this.registerState(new ExploMultiBehaviour(this), "Exploration");
-		this.registerState(new MeetingBehaviour(this), "Meeting");
-		this.registerState(new ShareMapBehaviour(this), "ShareMap");
+		this.registerState(new SeekMeetingBehaviour(this), "SeekMeeting");
 		
 		this.registerTransition("Decision", "Decision", (int) this.decisionToInt.get("Decision"));
 		
@@ -61,13 +59,9 @@ public class BrainBehaviour extends FSMBehaviour {
 		this.registerTransition("Decision", "Exploration", (int) this.decisionToInt.get("Exploration"));
 		this.registerTransition("Exploration", "Decision", (int) this.decisionToInt.get("Decision"));
 		
-		// Meeting transitions
-		this.registerTransition("Decision", "Meeting", (int) this.decisionToInt.get("Meeting"));
-		this.registerTransition("Meeting", "Decision", (int) this.decisionToInt.get("Decision"));
-		
-		// Communication transitions
-		this.registerTransition("Decision", "ShareMap", (int) this.decisionToInt.get("ShareMap"));
-		this.registerTransition("ShareMap", "Decision", (int) this.decisionToInt.get("Decision"));
+		// SeekMeeting transitions
+		this.registerTransition("Decision", "SeekMeeting", (int) this.decisionToInt.get("SeekMeeting"));
+		this.registerTransition("SeekMeeting", "Decision", (int) this.decisionToInt.get("Decision"));
 	}
 	
 	/*
@@ -114,23 +108,6 @@ public class BrainBehaviour extends FSMBehaviour {
 		this.lastPath = lastPath;
 	}
 	
-	/*
-	 * Meeting methods
-	 */
-	
-	public void endMeeting() {
-		this.meetingTopic = null;
-		this.participants = null;
-	}
-	
-	public String getMeetingTopic() {
-		return this.meetingTopic;
-	}
-	
-	public ArrayList<String> getParticipants() {
-		return this.participants;
-	}
-	
 	/* 
 	 * Topology methods
 	 */
@@ -163,6 +140,10 @@ public class BrainBehaviour extends FSMBehaviour {
 		this.closedNodes.add(newNode);
 	}
 	
+	public void fuseMap(MapRepresentation otherMap) {
+		this.myMap.fuseMap(otherMap.getSg());
+	}
+	
 
 	public boolean isStuck() {
 		return isStuck;
@@ -187,5 +168,13 @@ public class BrainBehaviour extends FSMBehaviour {
 	public void resetStuck() {
 		this.setStuck(false);
 		this.setTimeStuck(0);
+	}
+
+	public ArrayList<AgentKnowledge> getInterestingAgents() {
+		return interestingAgents;
+	}
+
+	public void setInterestingAgents(ArrayList<AgentKnowledge> interestingAgents) {
+		this.interestingAgents = interestingAgents;
 	}
 }

@@ -3,6 +3,8 @@ package eu.su.mas.dedaleEtu.mas.knowledge;
 import java.util.HashMap;
 import java.util.List;
 
+import customBehaviours.BrainBehaviour;
+import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreMultiAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import jade.lang.acl.ACLMessage;
@@ -11,7 +13,7 @@ import jade.util.leap.Serializable;
 
 public class AgentKnowledge implements Serializable{
 	/*
-	 * Contains all the knwoledge about an other agent
+	 * Contains all the knowledge about an other agent
 	 */
 	
 	private static final long serialVersionUID = -5138729245826161091L;
@@ -26,6 +28,8 @@ public class AgentKnowledge implements Serializable{
 	private String lastAction;
 	private List<String> lastPath;
 	
+	private int distance = Integer.MAX_VALUE;
+	private List<String> pathToAgent;
 	
 	private double meetUtility = 0; // How much do you want to meet me ?
 	
@@ -38,7 +42,7 @@ public class AgentKnowledge implements Serializable{
 	 * Unpack a MessageContainer, returns true if message is the most recent received from the agent
 	 */
 	
-	public boolean unpackMessage(ACLMessage newMessage) {
+	public boolean unpackMessage(BrainBehaviour otherBrain, ACLMessage newMessage) {
 		boolean recentMessage = newMessage.getPostTimeStamp() >= this.mostRecentPing;
 		
 		if (newMessage.getProtocol().equals("PingProtocol")) {
@@ -54,21 +58,53 @@ public class AgentKnowledge implements Serializable{
 				
 				if (!this.map.hasNode(lastPosition)) {
 					this.map.addNode(lastPosition, MapAttribute.open);
+					this.map.updateIgnorance(otherBrain.getMap());
 				}
 			} catch (UnreadableException e) {e.printStackTrace();}
 			
 		} else if (newMessage.getProtocol().equals("ShareMapProtocol")) {
-			
+			this.map.fuseMap(otherBrain.getMap().getSg());
+			this.map.updateIgnorance(otherBrain.getMap());
 		}
 		
 		return recentMessage;
 	}
+	
+	// Add the SG to the known map, updates its ignorance
+	public void fuseMap(BrainBehaviour otherBrain, SerializableSimpleGraph<String, MapAttribute> newSg) {
+		this.getMap().fuseMap(newSg);
+		this.getMap().updateIgnorance(otherBrain.getMap());
+	}
+	
 	
 	// Adds a new last known path
 	public void addNewPath(List<String> newPath) {
 		this.map.updateWithPath(newPath);
 		this.setLastPath(newPath);
 	}
+	
+	// Compute the share worth of the agent
+	public double getShareWorth() {
+		this.meetUtility = (Math.floor(this.map.getDiffEdges()/2) + this.map.getDiffNodes()) / Math.pow(distance, 2);
+		return this.meetUtility;
+	}
+	
+	// Computes the distance from the agent and the path to it
+	public void computeDistance(MapRepresentation otherMap, String otherPosition) {
+		try {
+			this.setPathToAgent(otherMap.getShortestPath(otherPosition, this.getLastPosition()));
+			this.setDistance(this.getPathToAgent().size());
+			if (this.pathToAgent.size() != 0)	return;
+		} catch (java.lang.IndexOutOfBoundsException e) {
+			//this.sayConsole(newAgent + " is not reachable");
+		} catch (java.lang.NullPointerException e) {
+			// node is not yet in map
+			//this.sayConsole(newAgent + " is not reachable");
+		}
+		this.setPathToAgent(null);
+		this.setDistance(Integer.MAX_VALUE);
+	}
+	
 	/*
 	 * Getters and setters
 	 */
@@ -122,7 +158,8 @@ public class AgentKnowledge implements Serializable{
 	}
 
 	public void setLastPath(List<String> lastPath) {
-		this.lastPath = lastPath;
+		if (lastPath.size() == 0)	this.lastPath = null;
+		else	this.lastPath = lastPath;
 	}
 	
 	public MapRepresentation getMap() {
@@ -139,5 +176,22 @@ public class AgentKnowledge implements Serializable{
 	
 	public void addMeetUtility(double moreUtility) {
 		this.meetUtility += moreUtility;
+	}
+
+	public int getDistance() {
+		return distance;
+	}
+
+	public void setDistance(int distance) {
+		if (distance == 0)	this.distance = Integer.MAX_VALUE;
+		else	this.distance = distance;
+	}
+
+	public List<String> getPathToAgent() {
+		return pathToAgent;
+	}
+
+	public void setPathToAgent(List<String> pathToAgent) {
+		this.pathToAgent = pathToAgent;
 	}
 }

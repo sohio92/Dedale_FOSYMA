@@ -43,16 +43,16 @@ public class ShareMapBehaviour extends OneShotBehaviour{
 	
 	private BrainBehaviour brain;
 	
-	public ShareMapBehaviour (BrainBehaviour brain) {
+	public ShareMapBehaviour (BrainBehaviour brain, HashSet<String> receivers) {
 		this.myAgent = brain.getAgent();
-		this.myMap = brain.getMap();
 		this.brain = brain;
 		
-		this.receivers = ((ExploreMultiAgent)this.myAgent).getAgentsNames();
+		this.receivers = receivers;
 	}
 	
 	public void onStart() {
-		((ExploreMultiAgent)this.myAgent).sayConsole("I'm going to send my map to my friends.");
+		this.myMap = brain.getMap();
+		//((ExploreMultiAgent)this.myAgent).sayConsole("Sending map to my friends.");
 	}
 	
 	@Override
@@ -67,10 +67,10 @@ public class ShareMapBehaviour extends OneShotBehaviour{
 			
 			// Retrieve what the other agent is missing
 			MapRepresentation otherMap = ((ExploreMultiAgent)this.myAgent).getMyKnowledge(otherAgent).map;
-			SerializableSimpleGraph<String, MapAttribute> missingSg = otherMap.getMissingFromMap(this.myMap);
+			//SerializableSimpleGraph<String, MapAttribute> missingSg = otherMap.getMissingFromMap(this.myMap);
 			
 			try {
-				msg.setContentObject(missingSg);
+				msg.setContentObject(otherMap.getSg());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -80,17 +80,5 @@ public class ShareMapBehaviour extends OneShotBehaviour{
 			//((ExploreMultiAgent)this.myAgent).sayConsole("I'm sending my map to " + otherAgent);
 			((AbstractDedaleAgent)this.myAgent).sendMessage(msg);
 		}
-	}
-	
-	@Override
-	public int onEnd() {
-		HashMap<String, Integer> decisionToInt = this.brain.getDecisionToInt();
-		
-		this.brain.registerState(new ShareMapBehaviour(this.brain), "ShareMap");
-		
-		this.brain.registerTransition("Decision", "ShareMap", (int) decisionToInt.get("ShareMap"));
-		this.brain.registerTransition("ShareMap", "Decision", (int) decisionToInt.get("Decision"));
-		
-		return decisionToInt.get("Decision");
 	}
 }

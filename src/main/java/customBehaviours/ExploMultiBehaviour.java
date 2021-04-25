@@ -64,70 +64,33 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 		super(brain.getAgent());
 		
 		this.brain = brain;
-		this.myMap = brain.getMap();
 		this.decisionToInt = brain.getDecisionToInt();
-		
-		this.openNodes = brain.getOpenNodes();
-		this.closedNodes = brain.getClosedNodes();
 	}
 
 	@Override
 	public void action() {
-		if(this.myMap.getMigration()==true) {
+		if(this.brain.getMap().getMigration()==true) {
 			((ExploreMultiAgent)this.myAgent).loadAllMaps();
 		}
 		
 		// Retrieve the current position
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 		
-		if (myPosition!=null){
-			//List of observable from the agent's current position
-			List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();//myPosition
-			
+		if (myPosition!=null){		
 			// New path
 			List<String> nextPath = new ArrayList<String>();
 			
-			/**
-			 * Just added here to let you see what the agent is doing, otherwise he will be too quick
-			 */
-			try {
-				this.myAgent.doWait(500);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			String nodeId = ((ExploreMultiAgent)this.myAgent).discover();
+			this.openNodes = brain.getOpenNodes();
+			this.closedNodes = brain.getClosedNodes();
+			this.myMap = brain.getMap();
 
-			//1) remove the current node from openlist and add it to closedNodes.
-			this.closedNodes.add(myPosition);
-			this.brain.addClosedNodes(myPosition);
-			
-			this.openNodes.remove(myPosition);
-			this.brain.removeOpenNodes(myPosition);
 
-			this.myMap.addNode(myPosition,MapAttribute.closed);
-
-			//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
-			Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
-			while(iter.hasNext()){
-				String nodeId=iter.next().getLeft();
-				if (!this.closedNodes.contains(nodeId)){
-					if (!this.openNodes.contains(nodeId)){
-						this.openNodes.add(nodeId);
-						this.brain.addOpenNodes(nodeId);
-						this.myMap.addNode(nodeId, MapAttribute.open);
-						this.myMap.addEdge(myPosition, nodeId);	
-						((ExploreMultiAgent)this.myAgent).addDiffNodes(1);
-					}else{
-						//the node exist, but not necessarily the edge
-						this.myMap.addEdge(myPosition, nodeId);
-					}
-					((ExploreMultiAgent)this.myAgent).addDiffEdges(1);
-					// If there exists an open node directly reachable, go for it
-					if (nextNode==null) {
-						nextNode=nodeId;
-						nextPath.add(myPosition);
-						nextPath.add(nextNode);
-					}
-				}
+			// If there exists an open node directly reachable, go for it
+			if (nextNode==null && nodeId != "") {
+				nextNode=nodeId;
+				nextPath.add(myPosition);
+				nextPath.add(nextNode);
 			}
 
 			//3) while openNodes is not empty, continues.
@@ -167,7 +130,7 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 				}
 
 				//list of observations associated to the currentPosition
-				List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
+				//List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
 				//System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);	
 			}
 			
