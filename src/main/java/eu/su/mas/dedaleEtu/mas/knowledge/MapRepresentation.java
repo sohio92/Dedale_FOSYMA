@@ -19,6 +19,7 @@ import org.graphstream.ui.view.Viewer;
 import org.graphstream.ui.view.Viewer.CloseFramePolicy;
 
 import dataStructures.serializableGraph.*;
+import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import javafx.application.Platform;
 
 /**
@@ -117,26 +118,28 @@ public class MapRepresentation implements Serializable {
 	 * @param idNode1 one side of the edge
 	 * @param idNode2 the other side of the edge
 	 */
-	public void addEdge(String idNode1,String idNode2){
+	public boolean addEdge(String idNode1,String idNode2){
 		try {
 			this.nbEdges++;
 			this.g.addEdge(this.nbEdges.toString(), idNode1, idNode2);
 			this.sg.addEdge(this.nbEdges.toString(), idNode1, idNode2);
+			return true;
 		}catch (IdAlreadyInUseException e1) {
 			System.err.println("ID existing");
 			System.exit(1);
 		}catch (EdgeRejectedException e2) {
 			//System.err.println("ajout arrete echoué "+e);
 			this.nbEdges--;
+			return false;
 		} catch(ElementNotFoundException e3){
 			
 		}
+		return false;
 	}	
 	/**
 	 * Fuse two maps together
 	 */
 	public void fuseMap(SerializableSimpleGraph<String, MapAttribute> sg2) {
-
 		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
 			this.updateNode(n.getNodeId(), n.getNodeContent());	
 		}
@@ -294,40 +297,42 @@ public class MapRepresentation implements Serializable {
 	}
 	public SerializableSimpleGraph<String, MapAttribute> getMissingFromMap(MapRepresentation otherMap){
 		// Returns the nodes and edges that the current map lacks
-		SerializableSimpleGraph<String,MapAttribute> missingSg = new SerializableSimpleGraph<String,MapAttribute>();
+		SerializableSimpleGraph<String, MapAttribute> missingSg = new SerializableSimpleGraph<String, MapAttribute>();
 		SerializableSimpleGraph<String, MapAttribute> otherSg = otherMap.getSg();
-		this.sg = this.getSg();
-		
+		SerializableSimpleGraph<String, MapAttribute> mySg = this.getSg(); // Temporary copy of this.sg
+		System.out.println(otherMap.ownerName + this.ownerName);
+
 		// Adding the missing nodes
 		Set<SerializableNode<String, MapAttribute>> otherNodes = otherSg.getAllNodes();
-		for (SerializableNode<String, MapAttribute> n: this.sg.getAllNodes()){
-			if (!otherNodes.contains(n)) {
-				missingSg.addNode(n.getNodeId(),n.getNodeContent());
+		for (SerializableNode<String, MapAttribute> n : otherNodes) {
+			if (!mySg.getAllNodes().contains(n)) {
+				missingSg.addNode(n.getNodeId(), n.getNodeContent());
+				mySg.addNode(n.getNodeId(), n.getNodeContent());
 			}
 		}
-		
+
 		// Adding the missing edges
 		Integer nbEd = 0;
-		Set<SerializableNode<String, MapAttribute>> missingNodes = missingSg.getAllNodes();
-		//	Iterating over all known nodes
-		for (SerializableNode<String, MapAttribute> n: this.sg.getAllNodes()){
-			Set<String> otherEdge = otherSg.getEdges(n.getNodeId());
-			//	Iterating over all known edges
-			for(String s: this.sg.getEdges(n.getNodeId())){
-				// If the edge is missing
-				if (!otherEdge.contains(s)) {
-					// If the node from the edge isn't missing but its edges are incomplete we add the node to missingSg
-					if (!missingNodes.contains(n)) {
-						missingSg.addNode(n.getNodeId());
-					}
-					// We add the edge
-					missingSg.addEdge(nbEd.toString(),n.getNodeId() ,s);
-					nbEd ++;
+		for (SerializableNode<String, MapAttribute> n : otherNodes) {
+			for (String s : otherSg.getEdges(n.getNodeId())) {
+				if (!mySg.getEdges(n.getNodeId()).contains(s) && s != null) {
+					if (!missingSg.getAllNodes().toString().contains(s)) missingSg.addNode(s);
+					missingSg.addEdge(nbEd.toString(), n.getNodeId(), s);
+					mySg.addEdge(nbEd.toString(), n.getNodeId(), s);
+					nbEd++;
 				}
-				
 			}
 		}
+
 		return missingSg;
+	}
+	
+	public void updateWithPath(List<String> otherPath) {
+		for (int i=0; i<otherPath.size()-1; i++) {
+			if (this.g.getNode(otherPath.get(i)) == null)	this.addNode(otherPath.get(i), MapAttribute.open);
+			if (this.g.getNode(otherPath.get(i+1)) == null)	this.addNode(otherPath.get(i+1), MapAttribute.open);
+			this.addEdge(otherPath.get(i), otherPath.get(i+1));
+		}
 	}
 	
 	public int getNbNodes() {
@@ -342,5 +347,13 @@ public class MapRepresentation implements Serializable {
 		// Updates the information about the owner's supposed ignorance
 		this.diffNodes = otherMap.getNbNodes() - this.g.getNodeCount();
 		this.diffEdge = otherMap.getNbEdges() - this.g.getEdgeCount();
+	}
+	
+	public boolean hasNode(String node) {
+		return this.g.getNode(node) != null;
+	}
+	
+	public Graph getGraph() {
+		return this.g;
 	}
 }

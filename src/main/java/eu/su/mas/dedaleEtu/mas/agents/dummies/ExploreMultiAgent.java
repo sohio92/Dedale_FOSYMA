@@ -3,17 +3,23 @@ package eu.su.mas.dedaleEtu.mas.agents.dummies;
 import java.util.ArrayList;
 import java.util.List;
 
-import CustomBehaviour.DecisionBehaviour;
-import CustomBehaviour.ListenBehaviour;
-import CustomBehaviour.PingPositionBehaviour;
-import CustomBehaviour.ShareMapBehaviour;
+import org.graphstream.graph.Node;
+
+import customBehaviours.BrainBehaviour;
+import customBehaviours.DecisionBehaviour;
+import customBehaviours.ExploMultiBehaviour;
+import customBehaviours.ListenBehaviour;
+import customBehaviours.PingPositionBehaviour;
+import customBehaviours.ShareMapBehaviour;
 import dataStructures.serializableGraph.SerializableSimpleGraph;
+import dataStructures.tuple.Couple;
 
 import java.util.HashSet;
+import java.util.Iterator;
 
+import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agent.behaviours.startMyBehaviours;
-import eu.su.mas.dedaleEtu.mas.behaviours.ExploMultiBehaviour;
 import eu.su.mas.dedaleEtu.mas.knowledge.AgentKnowledge;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
@@ -38,21 +44,17 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 
 	private static final long serialVersionUID = -6431752665590433727L;
 	
-	// Knowledge about the other agents
-	private List<AgentKnowledge> agentsKnowledge = new ArrayList<AgentKnowledge>();
-	
+
 	// Name of the application's other agents
-	private List<String> agentNames;
+	private HashSet<String> agentNames;
 	
-	// Maps of all the agents
-	private MapRepresentation myMap;
-	private List<MapRepresentation> agentsMaps = new ArrayList<MapRepresentation>();
+	private BrainBehaviour brain;
 
 	// Current destination of the agent
-	private String intentions;
+	private List<String> path;
 	
 	// Agents detected in the vicinity with their last known position
-	private ArrayList<String> agentsAround = new ArrayList<String>();
+	private HashSet<String> agentsAround = new HashSet<String>();
 	
 	// An agent's listen and ping behaviours, stored here to be able to stop and resume them at will
 	private PingPositionBehaviour pingPositionBehaviour;
@@ -64,6 +66,9 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	
 	// Information about current loading state
 	private boolean loaded = false;
+	
+	// What is my surrounding's range
+	private int maxRange = 4;
 	
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -89,12 +94,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		 ************************************************/
 		
 		// Instantiating all the maps, serializing them
-		this.myMap = new MapRepresentation("me");
 		
-		for (String agentName: this.agentNames) {
-			this.agentsKnowledge.add(new AgentKnowledge(agentName));
-		}
-		this.serializeAllMaps();
 		
 		// Ping behaviour : let other agents know where I am
 		this.pingPositionBehaviour = new PingPositionBehaviour(this);
@@ -103,12 +103,13 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		this.listenBehaviour = new ListenBehaviour(this);
 		lb.add(this.listenBehaviour);
 		// Decision behaviour : decides what happens next
-		lb.add(new DecisionBehaviour(this, this.myMap));
+		this.brain = new BrainBehaviour(this, this.agentNames);
+		lb.add(this.brain);
 		
 		/***
 		 * MANDATORY TO ALLOW YOUR AGENT TO BE DEPLOYED CORRECTLY
 		 */
-		
+		this.serializeAllMaps();
 		
 		addBehaviour(new startMyBehaviours(this,lb));
 		
@@ -118,6 +119,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	
 	public void sayConsole(String content) {
 		// Prints a new line in the console
+		if (content.contains("surroundings"))return;
 		System.out.println(this.getLocalName() + ": " + content);
 	}
 	
@@ -125,26 +127,25 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		// Prepare all maps for migration
 		this.loaded = false;
 		
-		this.myMap.prepareMigration();
+		this.getBrain().getMap().prepareMigration();
 		
-		for(AgentKnowledge otherKnowledge: this.agentsKnowledge) {
+		for(AgentKnowledge otherKnowledge: this.getBrain().getAgentsKnowledge().values()) {
 			otherKnowledge.map.prepareMigration();
 		}
 	}
 	public void loadAllMaps() {
 		// Restore all maps from migrated state
-		this.myMap.loadSavedData();
-		for (AgentKnowledge otherKnowledge: this.agentsKnowledge) {
+		this.getBrain().getMap().loadSavedData();
+		for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
 			otherKnowledge.map.loadSavedData();
-			otherKnowledge.setLastPosition(this.getCurrentPosition());
 		}
 		this.loaded = true;
 	}
 	
-	public List <String> getAgentsList(){
+	public HashSet <String> getAgentsList(){
 		// Get the list of all the agents through the yellow pages
 		AMSAgentDescription[] agentsDescriptionCatalog = null;
-		List <String> agentsNames= new ArrayList<String>();
+		HashSet <String> agentsNames= new HashSet<String>();
 		try {
 			SearchConstraints c = new SearchConstraints();
 			c.setMaxResults(new Long(-1));
@@ -157,21 +158,21 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		}
 		for (int i=0; i<agentsDescriptionCatalog.length; i++){
 			AID agentID = agentsDescriptionCatalog[i].getName();
-			agentsNames.add(agentID.getLocalName());
+			if (!agentID.getLocalName().equals(this.getAID().getLocalName()))	agentsNames.add(agentID.getLocalName());
 		}
 		return agentsNames;
 	}
 	
-	public String getIntention() {
-		return this.intentions;
+	public List<String> getPath() {
+		return this.path;
 	}
-	public void setIntention(String newIntention) {
-		this.intentions = newIntention;
+	public void setPath(List<String> newIntention) {
+		this.path = newIntention;
 	}
 	
 	public AgentKnowledge getMyKnowledge(String otherName) {
 		// Return the knowledge about the given agent
-		for (AgentKnowledge otherKnowledge: this.agentsKnowledge) {
+		for (AgentKnowledge otherKnowledge: this.getBrain().getAgentsKnowledge().values()) {
 			if (otherKnowledge.getName().equals(otherName)) {
 				return otherKnowledge;
 			}
@@ -180,32 +181,32 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	}
 	public void updateOthersIgnorance() {
 		// Increments the difference in known edges and known nodes after a step from myPosition to newNode
-		for (AgentKnowledge otherKnowledge: this.agentsKnowledge) {
-			otherKnowledge.map.updateIgnorance(this.myMap);
+		for (AgentKnowledge otherKnowledge: this.getBrain().getAgentsKnowledge().values()) {
+			otherKnowledge.map.updateIgnorance(this.getBrain().getMap());
 		}
 	}
 	
-	public List<String> getAgentsAround() {
+	public HashSet<String> getAgentsAround() {
 		return this.agentsAround;
 	}
-	public void addAgentsAround(String newAgent, String newPosition, long timeStamp) {
-		AgentKnowledge otherKnowledge = this.getMyKnowledge(newAgent);
-		// Checking if the information is relevant
-		if (otherKnowledge.getMostRecentTime() < timeStamp) {
+	
+	public void checkAgentAround(String newAgent, Integer maxDistance) {
+		AgentKnowledge newKnowledge = this.getBrain().getAgentsKnowledge().get(newAgent);
+		
+		if (maxDistance >= newKnowledge.getDistance()) {
 			// Add an agent to the vicinity and updates its last position
 			if (!this.agentsAround.contains(newAgent)) {
 				this.agentsAround.add(newAgent);
-				otherKnowledge.addNbEncounters(1);
 			}
-			
-			otherKnowledge.setMostRecentTime(timeStamp);
-			otherKnowledge.setLastPosition(newPosition);
-			this.sayConsole(newAgent + " last known position is now " + newPosition);
+		} else {
+			// Removes an agent from the vicinity
+			if (this.agentsAround.contains(newAgent)) {
+				this.agentsAround.remove(newAgent);
+			}
 		}
-		
-		// Agent might be in an unknown location, still needs to add update to the "me" map
-		//
+
 	}
+	
 	public void removeAgentsAround(String otherAgent) {
 		this.agentsAround.remove(otherAgent);
 	}
@@ -213,12 +214,14 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	public void clearSurroundings(int maxDistance) {
 		// If an agent is too far, it is removed from the surroundings
 		String myPosition = this.getCurrentPosition();
-		for (AgentKnowledge otherKnowledge: this.agentsKnowledge) {
+		for (AgentKnowledge otherKnowledge: this.getBrain().getAgentsKnowledge().values()) {
 			int distance = 0;
 			try {
-				distance = this.myMap.getShortestPath(myPosition, otherKnowledge.getLastPosition()).size();
+				distance = this.getBrain().getMap().getShortestPath(myPosition, otherKnowledge.getLastPosition()).size();
 			} catch (NullPointerException e) {
-				distance = -1;
+				distance = maxDistance + 1;
+			} catch (java.lang.IndexOutOfBoundsException e) {
+				distance = maxDistance + 1;
 			}
 			
 			if (distance > maxDistance || distance == 0) {
@@ -234,7 +237,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		this.agentNames.remove(otherAgent);
 	}
 	
-	public List<String> getAgentsNames(){
+	public HashSet<String> getAgentsNames(){
 		return this.agentNames;
 	}
 	public PingPositionBehaviour getPingBehaviour() {
@@ -247,21 +250,21 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	public void updateMap(String otherAgent, SerializableSimpleGraph<String, MapAttribute> otherSg) {
 		this.sayConsole("I'm updating my map with that of " + otherAgent);
 		// Update the "me" map
-		this.myMap.fuseMap(otherSg);
+		this.getBrain().getMap().fuseMap(otherSg);
 		
 		// Update the other agent's last known map
 		AgentKnowledge otherKnowledge = this.getMyKnowledge(otherAgent);
-		otherKnowledge.map.fuseMap(this.myMap.getSg());
+		otherKnowledge.map.fuseMap(this.getBrain().getMap().getSg());
 		this.updateOthersIgnorance();
 	}
 	
 	public void addDiffNodes(int increment) {
-		for (AgentKnowledge otherKnowledge: this.agentsKnowledge) {
+		for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
 			otherKnowledge.map.addDiffNodes(increment);
 		}
 	}
 	public void addDiffEdges(int increment) {
-		for (AgentKnowledge otherKnowledge: this.agentsKnowledge) {
+		for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
 			otherKnowledge.map.addDiffEdges(increment);
 		}
 	}
@@ -298,5 +301,78 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	
 	public boolean isLoaded() {
 		return this.loaded;
+	}
+	
+	public void moveToIntention(String newNode, List<String> newPath) {
+		this.setPath(newPath);
+		this.getBrain().setStuck(this.moveTo(newNode));
+	}
+	
+	public BrainBehaviour getBrain() {
+		return this.brain;
+	}
+	
+	public void addOpenNode(String newNode) {
+		this.getBrain().getMap().addNode(newNode, MapAttribute.open);
+		this.getBrain().addOpenNodes(newNode);
+	}
+
+	public int getMaxRange() {
+		return maxRange;
+	}
+
+	public void setMaxRange(int maxRange) {
+		this.maxRange = maxRange;
+	}
+	
+	// Discovers environment, if there exists a directly reachable open node, returns it
+	public String discover() {
+		//List of observable from the agent's current position
+		List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this).observe();//myPosition
+		
+		/**
+		 * Just added here to let you see what the agent is doing, otherwise he will be too quick
+		 */
+		try {
+			this.doWait(500);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		String myPosition = this.getCurrentPosition();
+		MapRepresentation map = this.getBrain().getMap();
+		
+		//1) remove the current node from openlist and add it to closedNodes.
+		this.getBrain().addClosedNodes(myPosition);
+		this.getBrain().removeOpenNodes(myPosition);
+		map.addNode(myPosition,MapAttribute.closed);
+		
+		// If we are where an agent was supposed to be, then we don't know where it is anymore
+		for (AgentKnowledge otherKnowledge: this.getBrain().getAgentsKnowledge().values()) {
+			if (myPosition == otherKnowledge.getLastPosition())	otherKnowledge.setLastPosition(null);
+		}
+
+		//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
+		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
+		String nodeOpen = "";
+		String nodeId = "";
+		while(iter.hasNext()){
+			nodeId=iter.next().getLeft();
+			if (!this.getBrain().getClosedNodes().contains(nodeId)){
+				if (!this.getBrain().getOpenNodes().contains(nodeId)){
+					this.getBrain().addOpenNodes(nodeId);
+					map.addNode(nodeId, MapAttribute.open);
+					map.addEdge(myPosition, nodeId);
+					this.addDiffNodes(1);
+				}else{
+					//the node exist, but not necessarily the edge
+					if (map.addEdge(myPosition, nodeId) == true)	this.addDiffEdges(1);
+				}
+				nodeOpen = nodeId;
+			}
+		}
+		
+		//?this.brain.fuseMap(map);
+		return nodeOpen;
 	}
 }
