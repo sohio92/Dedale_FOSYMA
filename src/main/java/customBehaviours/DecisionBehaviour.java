@@ -106,7 +106,9 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			// Start a meeting with the interesting agents
 			if (this.interestingAgents.size() != 0)	decision = "SeekMeeting";
 			
-		} else decision = "Patrol";
+		} else {
+			decision = "Patrol";
+		}
 		
 		// Maybe send them more to the most interested agents?
 		// Sending my current path if there are agents around me

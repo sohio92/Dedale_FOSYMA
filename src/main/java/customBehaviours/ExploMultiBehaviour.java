@@ -128,10 +128,6 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 					}
 
 				}
-
-				//list of observations associated to the currentPosition
-				//List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
-				//System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);	
 				
 				//((ExploreMultiAgent)this.myAgent).sayConsole("I want to go to " + this.nextNode + " I am following this path : " + nextPath);
 				this.brain.setLastPath(nextPath);

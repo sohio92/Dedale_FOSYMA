@@ -19,11 +19,15 @@ public class PingContainer implements Serializable {
 	// My last position
 	private String lastPosition;
 	
-	// My last action
+	// My last action -> Exploration, SeekMeeting, Hunt
 	private String lastAction;
 	
 	// Do I want to meet you?
 	private double meetUtility;
+	
+	// where is the golem ?
+	// null if I don't know
+	// == "position" of golem if I know where it is
 	
 	public PingContainer(ExploreMultiAgent myAgent, String otherAgent) {
 		this.setLastPosition(myAgent.getCurrentPosition());

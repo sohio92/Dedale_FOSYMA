@@ -69,6 +69,7 @@ public class ShareMapBehaviour extends OneShotBehaviour {
 	public void action() {
 		for (String otherAgent : this.receivers) {
 			AgentKnowledge otherKnowledge = ((ExploreMultiAgent) this.myAgent).getMyKnowledge(otherAgent);
+			
 			if (otherKnowledge.getLastAction() != null && (otherKnowledge.getLastAction().equals("Exploration")
 					|| otherKnowledge.getLastAction().equals("SeekMeeting")) == false) {
 				continue;
@@ -83,10 +84,10 @@ public class ShareMapBehaviour extends OneShotBehaviour {
 
 				// Retrieve what the other agent is missing
 				MapRepresentation otherMap = otherKnowledge.getMap();
-				// SerializableSimpleGraph<String, MapAttribute> missingSg =
-				// otherMap.getMissingFromMap(this.myMap);
+				//SerializableSimpleGraph<String, MapAttribute> missingSg = otherMap.getMissingFromMap(this.myMap);
 
 				try {
+					//msg.setContentObject(missingSg);
 					msg.setContentObject(((ExploreMultiAgent) this.myAgent).getBrain().getMap().getSg());
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
@@ -94,7 +95,7 @@ public class ShareMapBehaviour extends OneShotBehaviour {
 				}
 
 				// Send the Message
-				// ((ExploreMultiAgent)this.myAgent).sayConsole("I'm sending my map to " +
+				//((ExploreMultiAgent)this.myAgent).sayConsole("I'm sending my map to " +
 				// otherAgent);
 				((AbstractDedaleAgent) this.myAgent).sendMessage(msg);
 			}
