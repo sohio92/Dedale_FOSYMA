@@ -3,12 +3,16 @@ package customBehaviours;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.lang.Math;
 import java.util.Random;
 
+import org.graphstream.graph.Node;
+
 import eu.su.mas.dedaleEtu.mas.knowledge.AgentKnowledge;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
+import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreMultiAgent;
 import jade.core.behaviours.OneShotBehaviour;
 
@@ -45,7 +49,6 @@ public class DecisionBehaviour extends OneShotBehaviour {
 
 	@Override
 	public void action() {
-
 		this.agentsAround = ((ExploreMultiAgent)this.myAgent).getAgentsAround();
 		if (this.agentsAround.size() != 0) {
 			//((ExploreMultiAgent)this.myAgent).sayConsole("The other agents in my surroundings are : " + this.agentsAround);
@@ -53,11 +56,10 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		
 		this.retrieveInformation();
 		this.decision = this.takeDecision();
-		
+			
 		if (!this.decision.equals(brain.getLastDecision())) {
 			((ExploreMultiAgent)this.myAgent).sayConsole("I took the " + decision + " decision.");
 		}
-
 	}
 
 	// Retrieve the information necessary to take a decision
@@ -70,7 +72,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		// Who wants to meet me?
 		this.whoWantsToMeet = new HashSet<String>();
 		for (String otherAgent: this.agentsAround) {
-			if (this.brain.getAgentsKnowledge().get(otherAgent).getMeetUtility() > 0) {
+			if (this.brain.getAgentsKnowledge().get(otherAgent).getMeetUtility() >= 1) {
 				this.whoWantsToMeet.add(otherAgent);
 			}
 		}
@@ -82,32 +84,37 @@ public class DecisionBehaviour extends OneShotBehaviour {
 
 	// Takes a decision based on surroundings
 	private String takeDecision() {
+		String decision;
+		
 		// Start the decision process, default behavior is exploration
-		String decision = "Exploration";
+		if (this.brain.isExplorationFinished() == false) {
+			decision = "Exploration";
+			
+			// Get the agents whom I want to share with
+			this.interestingAgents = new ArrayList<AgentKnowledge>();
+			for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
+				double shareWorth = otherKnowledge.getShareWorth();
+				if (shareWorth >= 5) {
+					this.interestingAgents.add(otherKnowledge);
+				} //else	((ExploreMultiAgent)this.myAgent).sayConsole("I considered " + otherKnowledge.getName() + " but it is not worth it.");
+
+			}
+			this.brain.setInterestingAgents(this.interestingAgents);
+			
+			//((ExploreMultiAgent)this.myAgent).sayConsole("I want to meet : " + this.interestingAgents);
+			
+			// Start a meeting with the interesting agents
+			if (this.interestingAgents.size() != 0)	decision = "SeekMeeting";
+			
+		} else decision = "Patrol";
 		
 		// Maybe send them more to the most interested agents?
 		// Sending my current path if there are agents around me
-		//if (this.agentsAround.size() >= 1)	this.myAgent.addBehaviour(new SharePathBehaviour(this.brain));
-		
-		// Sending my map to the agents who are interested around me
-		if (this.whoWantsToMeet.size() > 0)	this.myAgent.addBehaviour(new ShareMapBehaviour(this.brain, this.whoWantsToMeet));
-
-		// Get the agents who I want to share with
-		this.interestingAgents = new ArrayList<AgentKnowledge>();
-		for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
-			double shareWorth = otherKnowledge.getShareWorth();
-			if (shareWorth >= 2) {
-				this.interestingAgents.add(otherKnowledge);
-			} //else	((ExploreMultiAgent)this.myAgent).sayConsole("I considered " + otherKnowledge.getName() + " but it is not worth it.");
-
+		if (this.agentsAround.size() >= 1)	{
+			this.myAgent.addBehaviour(new SharePathBehaviour(this.brain));
+			this.myAgent.addBehaviour(new ShareMapBehaviour(this.brain, this.agentsAround));
 		}
-		this.brain.setInterestingAgents(this.interestingAgents);
-	
-		//((ExploreMultiAgent)this.myAgent).sayConsole("I want to meet : " + this.interestingAgents);
-		
-		// Start a meeting with the interesting agents
-		//if (this.interestingAgents.size() != 0)	decision = "SeekMeeting";
-					
+
 		return decision;
 	}
 	

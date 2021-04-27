@@ -140,7 +140,6 @@ public class MapRepresentation implements Serializable {
 	 * Fuse two maps together
 	 */
 	public void fuseMap(SerializableSimpleGraph<String, MapAttribute> sg2) {
-
 		for (SerializableNode<String, MapAttribute> n: sg2.getAllNodes()){
 			this.updateNode(n.getNodeId(), n.getNodeContent());	
 		}
@@ -330,8 +329,8 @@ public class MapRepresentation implements Serializable {
 	
 	public void updateWithPath(List<String> otherPath) {
 		for (int i=0; i<otherPath.size()-1; i++) {
-			this.addNode(otherPath.get(i), MapAttribute.open);
-			this.addNode(otherPath.get(i+1), MapAttribute.open);
+			if (this.g.getNode(otherPath.get(i)) == null)	this.addNode(otherPath.get(i), MapAttribute.open);
+			if (this.g.getNode(otherPath.get(i+1)) == null)	this.addNode(otherPath.get(i+1), MapAttribute.open);
 			this.addEdge(otherPath.get(i), otherPath.get(i+1));
 		}
 	}
@@ -352,5 +351,9 @@ public class MapRepresentation implements Serializable {
 	
 	public boolean hasNode(String node) {
 		return this.g.getNode(node) != null;
+	}
+	
+	public Graph getGraph() {
+		return this.g;
 	}
 }

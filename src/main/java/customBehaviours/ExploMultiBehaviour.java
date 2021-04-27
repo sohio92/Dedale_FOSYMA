@@ -2,6 +2,8 @@ package customBehaviours;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +18,7 @@ import dataStructures.tuple.Couple;
 import eu.su.mas.dedale.env.Observation;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreMultiAgent;
+import eu.su.mas.dedaleEtu.mas.knowledge.AgentKnowledge;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import jade.core.behaviours.OneShotBehaviour;
@@ -85,63 +88,61 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 			this.closedNodes = brain.getClosedNodes();
 			this.myMap = brain.getMap();
 
-
-			// If there exists an open node directly reachable, go for it
-			if (nextNode==null && nodeId != "") {
-				nextNode=nodeId;
-				nextPath.add(myPosition);
-				nextPath.add(nextNode);
-			}
-
 			//3) while openNodes is not empty, continues.
 			if (this.openNodes.isEmpty()){
+				this.brain.setExplorationFinished(true);
 				((ExploreMultiAgent)this.myAgent).sayConsole("Exploration successufully done.");			
 			}else{
 				//4) select next move.
 				//4.1 If there exist one open node directly reachable, go for it,
 				//	 otherwise choose the closest node from the openNode list and go for it
+				
 				if (this.nextNode==null){
-					//no directly accessible openNode
-					//chose one, compute the path and take the first step.
-					ArrayList<List<String>> paths = new ArrayList<List<String>>();
-					ArrayList<Integer> openDistances = new ArrayList<Integer>();
-					for (int i = 0; i < this.openNodes.size(); i++) {
-						try {
-							paths.add(this.myMap.getShortestPath(myPosition, this.openNodes.get(i)));
-							openDistances.add(paths.get(-1).size());
-						} catch (java.lang.IndexOutOfBoundsException | java.lang.NullPointerException e) {
-							paths.add(Arrays.asList(myPosition));
-							openDistances.add(Integer.MAX_VALUE);
+					// If there exists an open node directly reachable, go for it
+					if (nodeId != "") {
+						nextNode=nodeId;
+						nextPath.add(myPosition);
+						nextPath.add(nextNode);
+					} else {
+						//no directly accessible openNode
+						//chose one, compute the path and take the first step.
+						ArrayList<List<String>> paths = new ArrayList<List<String>>();
+						for (int i = 0; i < this.openNodes.size(); i++) {
+							try {
+								paths.add(this.myMap.getShortestPath(myPosition, this.openNodes.get(i)));
+							} catch (java.lang.IndexOutOfBoundsException | java.lang.NullPointerException e) {
+								// No path to node
+							}
 						}
-					}
-					
-					int minDistance = Integer.MAX_VALUE;
-					int index = 0;
-					for (int i = 0; i < this.openNodes.size(); i++) {
-						int newDistance = openDistances.get(i);
-						if (newDistance <= minDistance) {
-							minDistance = newDistance;
-							index = i;
+						Collections.sort(paths, Comparator.comparing(a -> a.size()));
+						
+						// Giving the exploration priority lexicographically
+						int index = 0;
+						for (String otherAgent: ((ExploreMultiAgent)this.myAgent).getAgentsAround()) {
+							if (index >= paths.size() - 1)	break;
+							if (this.myAgent.getName().compareTo(otherAgent) == -1)	index ++;
 						}
+						
+						nextPath = paths.get(index);
+						this.nextNode = nextPath.get(0);
 					}
-					
-					nextPath = paths.get(index);
-					this.nextNode = nextPath.get(0);
+
 				}
 
 				//list of observations associated to the currentPosition
 				//List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
 				//System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);	
+				
+				//((ExploreMultiAgent)this.myAgent).sayConsole("I want to go to " + this.nextNode + " I am following this path : " + nextPath);
+				this.brain.setLastPath(nextPath);
+				((ExploreMultiAgent)this.myAgent).moveToIntention(this.nextNode, nextPath);
 			}
-			
-		this.brain.setLastPath(nextPath);
-		((ExploreMultiAgent)this.myAgent).moveToIntention(this.nextNode, nextPath);
-		}
-		
+		}		
 	}
 
 	@Override
 	public int onEnd() {
+		this.brain.deregisterState("Exploration");
 		this.brain.registerState(new ExploMultiBehaviour(this.brain), "Exploration");
 		
 		this.brain.registerTransition("Decision", "Exploration", (int) this.decisionToInt.get("Exploration"));

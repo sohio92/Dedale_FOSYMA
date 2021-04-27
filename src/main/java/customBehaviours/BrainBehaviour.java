@@ -3,11 +3,16 @@ package customBehaviours;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
+import org.graphstream.graph.Node;
+
+import dataStructures.serializableGraph.SerializableSimpleGraph;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreMultiAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.AgentKnowledge;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
+import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation.MapAttribute;
 import jade.core.Agent;
 import jade.core.behaviours.FSMBehaviour;
 
@@ -31,12 +36,14 @@ public class BrainBehaviour extends FSMBehaviour {
 	private boolean isStuck = false;
 	private int timeStuck = 0;
 	
+	private boolean explorationFinished = false;
+	
 	// The agents I'm interested in
 	private ArrayList<AgentKnowledge> interestingAgents;
 	
-	public BrainBehaviour (Agent myAgent, MapRepresentation myMap, HashSet<String> agentNames) {
+	public BrainBehaviour (Agent myAgent, HashSet<String> agentNames) {
 		this.myAgent = myAgent;
-		this.myMap = myMap;
+		this.myMap = new MapRepresentation("me");
 		
 		for (String agentName: agentNames) {
 			this.agentsKnowledge.put(agentName, new AgentKnowledge(agentName));
@@ -45,23 +52,30 @@ public class BrainBehaviour extends FSMBehaviour {
 		this.decisionToInt.put("Decision", 0);
 		this.decisionToInt.put("Exploration", 1);
 		this.decisionToInt.put("SeekMeeting", 2);
-		this.decisionToInt.put("ShareMap", 3);
+		this.decisionToInt.put("Patrol", 3);
 	}
 	
 	public void onStart() {
 		this.registerFirstState(new DecisionBehaviour(this), "Decision");
-		this.registerState(new ExploMultiBehaviour(this), "Exploration");
-		this.registerState(new SeekMeetingBehaviour(this), "SeekMeeting");
-		
 		this.registerTransition("Decision", "Decision", (int) this.decisionToInt.get("Decision"));
 		
 		// Exploration transitions
+		this.registerState(new ExploMultiBehaviour(this), "Exploration");
+		
 		this.registerTransition("Decision", "Exploration", (int) this.decisionToInt.get("Exploration"));
 		this.registerTransition("Exploration", "Decision", (int) this.decisionToInt.get("Decision"));
 		
 		// SeekMeeting transitions
+		this.registerState(new SeekMeetingBehaviour(this), "SeekMeeting");
+		
 		this.registerTransition("Decision", "SeekMeeting", (int) this.decisionToInt.get("SeekMeeting"));
 		this.registerTransition("SeekMeeting", "Decision", (int) this.decisionToInt.get("Decision"));
+		
+		// Patrol transitions
+		this.registerState(new PatrolBehaviour(this), "Patrol");
+		
+		this.registerTransition("Decision", "Patrol", (int) this.decisionToInt.get("Patrol"));
+		this.registerTransition("Patrol", "Decision", (int) this.decisionToInt.get("Decision"));
 	}
 	
 	/*
@@ -121,7 +135,7 @@ public class BrainBehaviour extends FSMBehaviour {
 	}
 	
 	public void addOpenNodes(String newOpenNode) {
-		this.openNodes.add(newOpenNode);
+		if (!this.getMap().hasNode(newOpenNode))	this.openNodes.add(newOpenNode);
 	}
 	
 	public void removeOpenNodes(String node) {
@@ -137,13 +151,30 @@ public class BrainBehaviour extends FSMBehaviour {
 	}
 	
 	public void addClosedNodes(String newNode) {
-		this.closedNodes.add(newNode);
+		if (!this.closedNodes.contains(newNode))	this.closedNodes.add(newNode);
 	}
 	
 	public void fuseMap(MapRepresentation otherMap) {
 		this.myMap.fuseMap(otherMap.getSg());
 	}
 	
+	public void fuseMap(SerializableSimpleGraph<String, MapAttribute> otherSg) {
+		this.myMap.fuseMap(otherSg);
+	}
+	
+	public void updateNodesWithMap() {
+		// What is my knowledge of the current map?
+        Iterator<Node> iterGraph=this.getMap().getGraph().iterator();
+        while(iterGraph.hasNext()){
+            Node n=iterGraph.next();
+            if (MapAttribute.valueOf((String)n.getAttribute("ui.class")).toString().equals("open")) {
+            	this.addOpenNodes(n.getId());
+            }
+            else if (MapAttribute.valueOf((String)n.getAttribute("ui.class")).toString().equals("closed")) {
+            	this.addClosedNodes(n.getId());
+            }
+        }
+	}
 
 	public boolean isStuck() {
 		return isStuck;
@@ -176,5 +207,13 @@ public class BrainBehaviour extends FSMBehaviour {
 
 	public void setInterestingAgents(ArrayList<AgentKnowledge> interestingAgents) {
 		this.interestingAgents = interestingAgents;
+	}
+
+	public boolean isExplorationFinished() {
+		return explorationFinished;
+	}
+
+	public void setExplorationFinished(boolean explorationFinished) {
+		this.explorationFinished = explorationFinished;
 	}
 }

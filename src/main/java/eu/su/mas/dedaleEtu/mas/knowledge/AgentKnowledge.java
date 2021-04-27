@@ -58,6 +58,7 @@ public class AgentKnowledge implements Serializable{
 				
 				if (!this.map.hasNode(lastPosition)) {
 					this.map.addNode(lastPosition, MapAttribute.open);
+					otherBrain.addOpenNodes(lastPosition);
 					this.map.updateIgnorance(otherBrain.getMap());
 				}
 			} catch (UnreadableException e) {e.printStackTrace();}
@@ -65,6 +66,7 @@ public class AgentKnowledge implements Serializable{
 		} else if (newMessage.getProtocol().equals("ShareMapProtocol")) {
 			this.map.fuseMap(otherBrain.getMap().getSg());
 			this.map.updateIgnorance(otherBrain.getMap());
+			otherBrain.updateNodesWithMap();
 		}
 		
 		return recentMessage;

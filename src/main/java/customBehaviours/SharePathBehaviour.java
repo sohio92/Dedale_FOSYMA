@@ -47,7 +47,7 @@ public class SharePathBehaviour extends OneShotBehaviour{
 	}
 	
 	public void onStart() {
-		((ExploreMultiAgent)this.myAgent).sayConsole("Sending current path to my friends.");
+		//((ExploreMultiAgent)this.myAgent).sayConsole("Sending current path to my friends.");
 	}
 	
 	@Override
