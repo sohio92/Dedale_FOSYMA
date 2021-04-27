@@ -355,7 +355,7 @@ public class MapRepresentation implements Serializable {
 		for (int i=0; i<otherPath.size()-1; i++) {
 			if (this.g.getNode(otherPath.get(i)) == null)	this.addNode(otherPath.get(i), MapAttribute.open);
 			if (this.g.getNode(otherPath.get(i+1)) == null)	this.addNode(otherPath.get(i+1), MapAttribute.open);
-			this.addEdge(otherPath.get(i), otherPath.get(i+1));
+			if (this.g.getNode(otherPath.get(i)) != this.g.getNode(otherPath.get(i+1)))	this.addEdge(otherPath.get(i), otherPath.get(i+1));
 		}
 	}
 	

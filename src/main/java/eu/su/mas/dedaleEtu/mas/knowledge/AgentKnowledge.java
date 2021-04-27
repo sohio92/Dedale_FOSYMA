@@ -102,7 +102,10 @@ public class AgentKnowledge implements Serializable{
 		} catch (java.lang.NullPointerException e) {
 			// node is not yet in map
 			//this.sayConsole(newAgent + " is not reachable");
+		} catch (java.lang.IllegalStateException e) {
+			// One of the node is null
 		}
+		
 		this.setPathToAgent(null);
 		this.setDistance(Integer.MAX_VALUE);
 	}

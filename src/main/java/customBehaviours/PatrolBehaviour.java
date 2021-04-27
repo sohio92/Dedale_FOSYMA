@@ -74,16 +74,19 @@ public class PatrolBehaviour extends OneShotBehaviour {
 			this.g = this.myMap.getGraph();
 			
 			// Seek the closest friends to share my map!
-			int lowestSize = Integer.MAX_VALUE;
-			for (AgentKnowledge otherAgent: this.brain.getAgentsKnowledge().values()) {
-				if (otherAgent.getLastAction() != null && otherAgent.getLastAction().equals("Exploration")) {
-					otherAgent.computeDistance(this.myMap, myPosition);
-					if (otherAgent.getDistance() < lowestSize) {
-						nextPath = otherAgent.getPathToAgent();
-						this.nextNode = nextPath.get(0);
+			if (this.brain.isStuck()) {
+				int lowestSize = Integer.MAX_VALUE;
+				for (AgentKnowledge otherAgent: this.brain.getAgentsKnowledge().values()) {
+					if (otherAgent.getLastAction() != null && otherAgent.getLastAction().equals("Exploration")) {
+						otherAgent.computeDistance(this.myMap, myPosition);
+						if (otherAgent.getDistance() < lowestSize) {
+							nextPath = otherAgent.getPathToAgent();
+							this.nextNode = nextPath.get(0);
+						}
 					}
 				}
-			}			
+			}
+			
 			// Otherwise randomly wander
 			List<Couple<String,List<Couple<Observation,Integer>>>> lobs = ((AbstractDedaleAgent)this.myAgent).observe();
 			Collections.shuffle(lobs);

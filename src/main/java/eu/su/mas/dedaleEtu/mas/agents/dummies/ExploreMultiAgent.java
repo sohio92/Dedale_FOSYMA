@@ -305,7 +305,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	
 	public void moveToIntention(String newNode, List<String> newPath) {
 		this.setPath(newPath);
-		this.getBrain().setStuck(this.moveTo(newNode));
+		this.getBrain().setStuck(!this.moveTo(newNode));
 	}
 	
 	public BrainBehaviour getBrain() {
@@ -373,8 +373,8 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		}
 		
 		//list of observations associated to the currentPosition
-		List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
-		this.sayConsole(" - State of the observations : "+lobs);	
+		//List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
+		//this.sayConsole(" - State of the observations : "+lobs);	
 		
 		//?this.brain.fuseMap(map);
 		return nodeOpen;

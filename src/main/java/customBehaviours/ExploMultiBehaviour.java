@@ -79,7 +79,7 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 		// Retrieve the current position
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 		
-		if (myPosition!=null){		
+		if (myPosition!=null){
 			// New path
 			List<String> nextPath = new ArrayList<String>();
 			
@@ -90,10 +90,25 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 
 			//3) while openNodes is not empty, continues.
 			if (this.openNodes.isEmpty()){
+				for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
+					otherKnowledge.setMeetUtility(0);
+				}
 				this.brain.setExplorationFinished(true);
 				((ExploreMultiAgent)this.myAgent).sayConsole("Exploration successufully done.");			
 			}else{
 				//4) select next move.
+				// If stuck, go to a node at random
+				if (this.brain.isStuck() == true) {
+					List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();
+					Collections.shuffle(lobs);
+					
+					this.nextNode = lobs.get(0).getLeft();
+					nextPath.add(myPosition);
+					nextPath.add(this.nextNode);
+					
+					((ExploreMultiAgent)this.myAgent).sayConsole("I am stuck! Moving out of the way to " + this.nextNode);
+				}
+				
 				//4.1 If there exist one open node directly reachable, go for it,
 				//	 otherwise choose the closest node from the openNode list and go for it
 				
@@ -119,9 +134,10 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 						// Giving the exploration priority lexicographically
 						int index = 0;
 						for (String otherAgent: ((ExploreMultiAgent)this.myAgent).getAgentsAround()) {
-							if (index >= paths.size() - 1)	break;
 							if (this.myAgent.getName().compareTo(otherAgent) == -1)	index ++;
 						}
+						
+						if (index >= paths.size() - 1)	index = paths.size() - 1;
 						
 						nextPath = paths.get(index);
 						this.nextNode = nextPath.get(0);

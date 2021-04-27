@@ -64,6 +64,18 @@ public class DecisionBehaviour extends OneShotBehaviour {
 
 	// Retrieve the information necessary to take a decision
 	private void retrieveInformation() {
+		// Check if an agent is not to be found
+		try {
+			for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
+				if (otherKnowledge.getLastPosition() != null && otherKnowledge.getLastPosition().equals(this.brain.getAgent().getCurrentPosition())) {
+					otherKnowledge.setLastPosition(null);
+					this.brain.getAgent().sayConsole(otherKnowledge.getName() + " is not where it is supposed to be!");
+				}
+			}
+		} catch(Exception e) {
+			
+		}
+		
 		// How far are the other agents?
 		for (AgentKnowledge otherAgent : this.brain.getAgentsKnowledge().values()) {
 			otherAgent.computeDistance(this.brain.getMap(), this.myAgent.getCurrentPosition());
@@ -125,7 +137,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		double utility = otherAgent.getShareWorth();
 		if (this.whoWantsToMeet.contains(otherAgent.getName()))	utility *= 2;
 	
-		return utility;
+		return Math.floor(utility * 1000);
 	}
 	
 	// Manages the case where agents are stuck
