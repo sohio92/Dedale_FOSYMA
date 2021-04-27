@@ -90,11 +90,7 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 
 			//3) while openNodes is not empty, continues.
 			if (this.openNodes.isEmpty()){
-				for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
-					otherKnowledge.setMeetUtility(0);
-				}
-				this.brain.setExplorationFinished(true);
-				((ExploreMultiAgent)this.myAgent).sayConsole("Exploration successufully done.");			
+				this.brain.finishExploration();
 			}else{
 				//4) select next move.
 				// If stuck, go to a node at random

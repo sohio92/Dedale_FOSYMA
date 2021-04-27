@@ -45,6 +45,9 @@ public class BrainBehaviour extends FSMBehaviour {
 	// The agents I'm interested in
 	private ArrayList<AgentKnowledge> interestingAgents;
 	
+	// SeekMeetingTimeOut
+	private int timeSoughtMeeting = 0;
+	
 	public BrainBehaviour (Agent myAgent, HashSet<String> agentNames) {
 		this.myAgent = myAgent;
 		this.myMap = new MapRepresentation("me");
@@ -134,6 +137,13 @@ public class BrainBehaviour extends FSMBehaviour {
 		this.lastPath = lastPath;
 	}
 	
+	public void finishExploration(){
+		for (AgentKnowledge otherKnowledge: this.getAgentsKnowledge().values()) {
+			otherKnowledge.setMeetUtility(0);
+		}
+		this.setExplorationFinished(true);
+		((ExploreMultiAgent)this.myAgent).sayConsole("Exploration successufully done.");
+	}
 	/* 
 	 * Topology methods
 	 */
@@ -247,5 +257,17 @@ public class BrainBehaviour extends FSMBehaviour {
 
 	public void setGolemStench(HashSet<String> golemStench) {
 		this.golemStench = golemStench;
+	}
+
+	public int getTimeSoughtMeeting() {
+		return timeSoughtMeeting;
+	}
+
+	public void setTimeSoughtMeeting(int timeSoughtMeeting) {
+		this.timeSoughtMeeting = timeSoughtMeeting;
+	}
+	
+	public void addTimeSoughtMeeting(int moreTime) {
+		this.timeSoughtMeeting += moreTime;
 	}
 }

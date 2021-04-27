@@ -48,7 +48,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 	}
 
 	@Override
-	public void action() {
+	public void action() {		
 		this.agentsAround = ((ExploreMultiAgent)this.myAgent).getAgentsAround();
 		if (this.agentsAround.size() != 0) {
 			//((ExploreMultiAgent)this.myAgent).sayConsole("The other agents in my surroundings are : " + this.agentsAround);
@@ -89,11 +89,16 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			}
 		}
 		
+		// Did we timeout the last meeting?
+		if (this.decision != null && !this.decision.equals("SeekMeeting")) this.brain.setTimeSoughtMeeting(0);
+		
+		// Have we finished the exploration?
+		if (((ExploreMultiAgent)this.myAgent).isLoaded() && !this.brain.isExplorationFinished() && this.brain.getOpenNodes().size() == 0)	this.brain.finishExploration();
+		
 		// Check golem
 		this.brain.setGolemStench(((ExploreMultiAgent)this.myAgent).getStenchAround());
 		//	Reseting history if nothing detected
 		if (this.brain.getGolemStench().size() == 0)	this.brain.setHuntingHistory(new ArrayList<String>());
-		//
 	}
 
 	// Takes a decision based on surroundings
@@ -118,7 +123,10 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			//((ExploreMultiAgent)this.myAgent).sayConsole("I want to meet : " + this.interestingAgents);
 			
 			// Start a meeting with the interesting agents
-			if (this.interestingAgents.size() != 0)	decision = "SeekMeeting";
+			if (this.interestingAgents.size() != 0 && this.brain.getTimeSoughtMeeting() < 4) {
+				decision = "SeekMeeting";
+				this.brain.addTimeSoughtMeeting(1);
+			}
 			
 		} else {
 			decision = "Patrol";
