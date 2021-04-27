@@ -90,7 +90,9 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		}
 		
 		// Check golem
-		
+		this.brain.setGolemStench(((ExploreMultiAgent)this.myAgent).getStenchAround());
+		//	Reseting history if nothing detected
+		if (this.brain.getGolemStench().size() == 0)	this.brain.setHuntingHistory(new ArrayList<String>());
 		//
 	}
 
@@ -120,6 +122,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			
 		} else {
 			decision = "Patrol";
+			if (this.brain.getGolemStench().size() > 0)	decision = "Hunt";
 		}
 		
 		// Maybe send them more to the most interested agents?

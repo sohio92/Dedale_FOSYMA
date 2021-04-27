@@ -55,11 +55,13 @@ public class HuntBehaviour extends OneShotBehaviour{
 			((ExploreMultiAgent)this.myAgent).loadAllMaps();
 		}
 		
-		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
-		String lastPosition = myPosition;
-		String nextNode=null;
+		try {
+			this.myAgent.doWait(((ExploreMultiAgent)this.myAgent).getTimeSleep());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
-		int time_sleep = 0;
+		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 		
 		// Who is currently hunting with me?
 		HashSet<String> hunters = new HashSet<String>();
@@ -67,80 +69,34 @@ public class HuntBehaviour extends OneShotBehaviour{
 			if (otherKnowledge.getLastAction().equals("Hunt"))	hunters.add(otherKnowledge.getName());
 		}
 
-		HashSet<String> golemStench = ((ExploreMultiAgent)this.myAgent).getStenchAround();
-		
-		// à partir du moment du moment où on détecte, on commence un historique
-		
-		// tu vas essayer de ne jamais 
-		
-		// container qu'est-ce qu'on sait des golems
-		// list de positons possibles
-		// à partir de Stench, on va ajouter des positions possibles (qui seront elles mêmes envoyées
-		// de manière régulière aux autres agents via un Ping)
-		
-		//The move action (if any) should be the last action of your behaviour
-		List<String> list = new ArrayList<String>();
-		for (int i = 1; i < lobs.size(); i++) {
-			Couple<String, List<Couple<Observation, Integer>>> couple = lobs.get(i);
-			//for (Couple<String, List<Couple<Observation, Integer>>> couple : lobs) {
-			if (couple.getRight().size() > 0){
-				if (!couple.getLeft().equals(abord)){
-					list.add(couple.getRight().get(0).getLeft().getName());
-					[    ]
-				}
-				else {
-					remove += 1;
-				}
-			}
-			else {
-				list.add(null);
-			}
-		}
-		
-		int index = list.indexOf("Stench");
-		//ne sent rien autour de lui
-		if (index==-1) {
-			/*removing the current position from the list of target, not necessary as 
-			 * to stay is an action but allow quicker random move
-			 */
-			System.out.println("ATCHOUM !!!!!!!!!!!!!!!!!!");
-			int moveId=1+r.nextInt(lobs.size()-1);
-			((AbstractDedaleAgent)this.myAgent).moveTo(lobs.get(moveId).getLeft());
-		}
-		else {
-			System.out.println("JE SENS!!!!!!!!!!!!!!!!!!");
-			System.out.println("jai suprimer "+ (remove - 1) + "deplacement ");
-			//ping la futur pos
-			String pos=lobs.get(index+remove).getLeft();
 
-			
-			
-			
-			//A message is defined by : a performative, a sender, a set of receivers, (a protocol),(a content (and/or contentOBject))
-			if (pos!=""){
-				// Sending my position
-
-				//Mandatory to use this method (it takes into account the environment to decide if someone is reachable or not)
-				ACLMessage msg=new ACLMessage(ACLMessage.INFORM);
-				msg.setSender(this.myAgent.getAID());
-				msg.setProtocol(chasseProto);
-				
-				for (String otherAgent: listchasseur) {
-					System.out.println(((AbstractDedaleAgent)myAgent).getName() + " send to " + otherAgent + " with protocol : "+ msg.getProtocol());
-					msg.addReceiver(new AID(otherAgent, AID.ISLOCALNAME));
-				}
-				msg.setContent(pos);
-				((AbstractDedaleAgent)myAgent).sendMessage(msg);
-			}
-
-			((AbstractDedaleAgent)this.myAgent).moveTo(pos);
+		// Retrieving the detected stench
+		HashSet<String> golemStench = this.brain.getGolemStench();
+		List<String> huntingHistory = this.brain.getHuntingHistory();
+		
+		// Updating history
+		this.brain.addHuntingHistory(myPosition);
+		
+		// Randomly choosing which stench to go
+		String nextNode = null;
+		for (String otherNode: golemStench) {
+			if (otherNode.equals(myPosition))	continue;
+			if (huntingHistory.contains(otherNode))	continue;
+			nextNode = otherNode;
+			break;
 		}
-		try {
-			Thread.sleep(time_sleep);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		
+		// If we couldn't find any node, we have to check in the history
+		if (nextNode == null) {
+			nextNode = huntingHistory.get(-1);
 		}
+		
+		// Doing this in case observation range greater than one
+		List<String> nextPath = this.brain.getMap().getShortestPath(myPosition, nextNode);
+		nextNode = nextPath.get(0);	
+		
+		this.brain.setLastPath(nextPath);
+		((ExploreMultiAgent)this.myAgent).moveToIntention(nextNode, nextPath);
 	}
 
 

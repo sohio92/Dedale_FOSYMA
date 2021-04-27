@@ -37,6 +37,10 @@ public class BrainBehaviour extends FSMBehaviour {
 	private int timeStuck = 0;
 	
 	private boolean explorationFinished = false;
+	private List<String> huntingHistory;
+	
+	// Stench detected
+	private HashSet<String> golemStench;
 	
 	// The agents I'm interested in
 	private ArrayList<AgentKnowledge> interestingAgents;
@@ -53,6 +57,7 @@ public class BrainBehaviour extends FSMBehaviour {
 		this.decisionToInt.put("Exploration", 1);
 		this.decisionToInt.put("SeekMeeting", 2);
 		this.decisionToInt.put("Patrol", 3);
+		this.decisionToInt.put("Hunt", 4);
 	}
 	
 	public void onStart() {
@@ -76,6 +81,13 @@ public class BrainBehaviour extends FSMBehaviour {
 		
 		this.registerTransition("Decision", "Patrol", (int) this.decisionToInt.get("Patrol"));
 		this.registerTransition("Patrol", "Decision", (int) this.decisionToInt.get("Decision"));
+		
+		// Hunting transitions
+		this.registerState(new HuntBehaviour(this), "Hunt");
+		
+		this.registerTransition("Decision", "Hunt", (int) this.decisionToInt.get("Hunt"));
+		this.registerTransition("Hunt", "Decision", (int) this.decisionToInt.get("Decision"));
+		
 	}
 	
 	/*
@@ -215,5 +227,25 @@ public class BrainBehaviour extends FSMBehaviour {
 
 	public void setExplorationFinished(boolean explorationFinished) {
 		this.explorationFinished = explorationFinished;
+	}
+
+	public List<String> getHuntingHistory() {
+		return huntingHistory;
+	}
+
+	public void setHuntingHistory(List<String> huntingHistory) {
+		this.huntingHistory = huntingHistory;
+	}
+	
+	public void addHuntingHistory(String newNode) {
+		this.huntingHistory.add(newNode);
+	}
+
+	public HashSet<String> getGolemStench() {
+		return golemStench;
+	}
+
+	public void setGolemStench(HashSet<String> golemStench) {
+		this.golemStench = golemStench;
 	}
 }

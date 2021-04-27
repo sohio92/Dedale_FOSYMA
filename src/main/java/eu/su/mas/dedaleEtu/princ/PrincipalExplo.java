@@ -35,7 +35,7 @@ import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreMultiAgent;
  * @author hc
  *
  */
-public class Principal {
+public class PrincipalExplo {
 
 
 	private static HashMap<String, ContainerController> containerList=new HashMap<String, ContainerController>();// container's name - container's ref

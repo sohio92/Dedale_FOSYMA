@@ -70,6 +70,9 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	// What is my surrounding's range
 	private int maxRange = 4;
 	
+	// Time to sleep between each step to see whats going on
+	private int timeSleep = 500;
+	
 	/**
 	 * This method is automatically called when "agent".start() is executed.
 	 * Consider that Agent is launched for the first time. 
@@ -334,7 +337,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 		 */
 		try {
-			this.doWait(500);
+			this.doWait(this.getTimeSleep());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -399,5 +402,9 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		}
 		
 		return golemStench;
+	}
+	
+	public int getTimeSleep() {
+		return this.timeSleep;
 	}
 }
