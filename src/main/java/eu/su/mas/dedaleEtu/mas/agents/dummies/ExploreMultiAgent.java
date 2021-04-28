@@ -396,11 +396,11 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	}
 	
 	// Returns what we smell
-	public HashSet<String> getStenchAround(){
+	public List<String> getStenchAround(){
 		List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this).observe();
 		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
 		
-		HashSet<String> golemStench = new HashSet<String>();
+		List<String> golemStench = new ArrayList<String>();
 		//while (iter.hasNext()) {
 			//Couple<String,List<Couple<Observation,Integer>>> nodeObserved = iter.next();
 		for (Couple<String,List<Couple<Observation,Integer>>> nodeObserved : lobs) {		

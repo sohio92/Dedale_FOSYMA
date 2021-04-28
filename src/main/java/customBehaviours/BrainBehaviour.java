@@ -258,7 +258,7 @@ public class BrainBehaviour extends FSMBehaviour {
 		this.huntingHistory.add(newNode);
 	}
 
-	public HashSet<String> getGolemStench() {
+	public List<String> getGolemStench() {
 		//return golemStench;
 		return ((ExploreMultiAgent)this.myAgent).getStenchAround();
 	}

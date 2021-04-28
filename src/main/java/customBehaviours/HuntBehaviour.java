@@ -2,6 +2,7 @@ package customBehaviours;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -69,9 +70,8 @@ public class HuntBehaviour extends OneShotBehaviour{
 			if (otherKnowledge.getLastAction() != null && otherKnowledge.getLastAction().equals("Hunt"))	hunters.add(otherKnowledge.getName());
 		}
 
-
 		// Retrieving the detected stench
-		HashSet<String> golemStench = this.brain.getGolemStench();
+		List<String> golemStench = this.brain.getGolemStench();
 		List<String> huntingHistory = this.brain.getHuntingHistory();
 		
 		// Updating history
@@ -79,6 +79,7 @@ public class HuntBehaviour extends OneShotBehaviour{
 		
 		// Randomly choosing which stench to go
 		String nextNode = null;
+		Collections.shuffle(golemStench);
 		for (String otherNode: golemStench) {
 			if (otherNode.equals(myPosition))	continue;
 			if (huntingHistory.contains(otherNode))	continue;
