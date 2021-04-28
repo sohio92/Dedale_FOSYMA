@@ -37,7 +37,7 @@ public class BrainBehaviour extends FSMBehaviour {
 	private int timeStuck = 0;
 	
 	private boolean explorationFinished = false;
-	private List<String> huntingHistory;
+	private List<String> huntingHistory = new ArrayList<String>();
 	
 	// Stench detected
 	private List<String> golemStench;

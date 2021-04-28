@@ -83,7 +83,8 @@ public class HuntBehaviour extends OneShotBehaviour{
 		// si egalité lordre lexico fait la diff
 		hunters_possibility.forEach((hunter, possibility) -> {
 			if (possibility.size() < golemStench.size() ||
-					possibility.size() == golemStench.size() && this.myAgent.getName().compareTo(hunter) == -1) {
+					(possibility.size() == golemStench.size() && this.myAgent.getName().compareTo(hunter) == -1)) {
+				this.brain.getAgent().sayConsole("je laisse la place a " + hunter);
 				golemStench.removeAll(possibility);
 			}
 		});
@@ -94,7 +95,7 @@ public class HuntBehaviour extends OneShotBehaviour{
 		
 		// Randomly choosing which stench to go
 		String nextNode = null;
-		//Collections.shuffle(golemStench);
+		Collections.shuffle(golemStench);
 		for (String otherNode: golemStench) {
 			if (otherNode.equals(myPosition))	continue;
 			if (huntingHistory.contains(otherNode))	continue;
