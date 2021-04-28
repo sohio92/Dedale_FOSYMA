@@ -1,7 +1,9 @@
 package eu.su.mas.dedaleEtu.mas.agents.dummies;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import org.graphstream.graph.Node;
 
@@ -311,6 +313,10 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		this.getBrain().setStuck(!this.moveTo(newNode));
 	}
 	
+	public void moveToIntention(String newNode) {
+		this.getBrain().setStuck(!this.moveTo(newNode));
+	}
+	
 	public BrainBehaviour getBrain() {
 		return this.brain;
 	}
@@ -357,7 +363,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 
 		//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
 		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
-		String nodeOpen = "";
+		List<String> nextOpen = new ArrayList<String>();
 		String nodeId = "";
 		while(iter.hasNext()){
 			nodeId=iter.next().getLeft();
@@ -371,8 +377,14 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 					//the node exist, but not necessarily the edge
 					if (map.addEdge(myPosition, nodeId) == true)	this.addDiffEdges(1);
 				}
-				nodeOpen = nodeId;
+				nextOpen.add(nodeId);
 			}
+		}
+		
+		String nodeOpen = "";
+		if (nextOpen.size() > 0) {
+			Collections.shuffle(nextOpen);
+			nodeOpen = nextOpen.get(0);
 		}
 		
 		//list of observations associated to the currentPosition

@@ -66,7 +66,6 @@ public class AgentKnowledge implements Serializable{
 		} else if (newMessage.getProtocol().equals("ShareMapProtocol")) {
 			this.map.fuseMap(otherBrain.getMap().getSg());
 			this.map.updateIgnorance(otherBrain.getMap());
-			otherBrain.updateNodesWithMap();
 		}
 		
 		return recentMessage;

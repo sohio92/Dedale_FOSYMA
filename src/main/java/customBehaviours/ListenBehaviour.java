@@ -98,6 +98,7 @@ public class ListenBehaviour extends CyclicBehaviour{
 			
 			BrainBehaviour brain = ((ExploreMultiAgent)this.myAgent).getBrain();
 			brain.getMap().updateWithPath(lastPath);
+			//brain.updateNodesWithMap();
 			
 			otherKnowledge.getMap().updateIgnorance(brain.getMap());
 			

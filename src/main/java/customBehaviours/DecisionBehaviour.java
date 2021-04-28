@@ -64,16 +64,26 @@ public class DecisionBehaviour extends OneShotBehaviour {
 
 	// Retrieve the information necessary to take a decision
 	private void retrieveInformation() {
-		// Check if an agent is not to be found
 		try {
-			for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
-				if (otherKnowledge.getLastPosition() != null && otherKnowledge.getLastPosition().equals(this.brain.getAgent().getCurrentPosition())) {
+			// Update my knowledge of the nodes
+			this.brain.updateNodesWithMap();
+			
+			// Check if exploration is finished
+			if (this.decision != null && this.decision.equals("Exploration") && (this.brain.getOpenNodes().size() == 0
+					|| this.brain.getClosedNodes().size() == this.brain.getMap().getNbNodes()))
+				this.brain.finishExploration();
+
+			// Check if an agent is not to be found
+			for (AgentKnowledge otherKnowledge : this.brain.getAgentsKnowledge().values()) {
+				if (otherKnowledge.getLastPosition() != null
+						&& otherKnowledge.getLastPosition().equals(this.brain.getAgent().getCurrentPosition())) {
 					otherKnowledge.setLastPosition(null);
 					this.brain.getAgent().sayConsole(otherKnowledge.getName() + " is not where it is supposed to be!");
 				}
 			}
 		} catch(Exception e) {
-			
+			// The map wasn't ready
+			((ExploreMultiAgent)this.myAgent).sayConsole("My map wasn't ready to load");
 		}
 		
 		// How far are the other agents?
@@ -90,7 +100,11 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		}
 		
 		// Did we timeout the last meeting?
-		if (this.decision != null && !this.decision.equals("SeekMeeting")) this.brain.setTimeSoughtMeeting(0);
+		if (this.decision != null && !this.decision.equals("SeekMeeting")) {
+			this.brain.addWaitOutMeeting(1);
+			this.brain.setTimeSoughtMeeting(0);
+		}
+		
 		
 		// Have we finished the exploration?
 		if (((ExploreMultiAgent)this.myAgent).isLoaded() && !this.brain.isExplorationFinished() && this.brain.getOpenNodes().size() == 0)	this.brain.finishExploration();
@@ -123,8 +137,9 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			//((ExploreMultiAgent)this.myAgent).sayConsole("I want to meet : " + this.interestingAgents);
 			
 			// Start a meeting with the interesting agents
-			if (this.interestingAgents.size() != 0 && this.brain.getTimeSoughtMeeting() < 4) {
+			if (this.interestingAgents.size() != 0 && this.brain.getTimeSoughtMeeting() < 3 && this.brain.getWaitOutMeeting() > 5) {
 				decision = "SeekMeeting";
+				this.brain.setWaitOutMeeting(0);
 				this.brain.addTimeSoughtMeeting(1);
 			}
 			

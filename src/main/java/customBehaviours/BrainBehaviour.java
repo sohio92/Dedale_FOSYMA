@@ -47,6 +47,7 @@ public class BrainBehaviour extends FSMBehaviour {
 	
 	// SeekMeetingTimeOut
 	private int timeSoughtMeeting = 0;
+	private int waitOutMeeting = 5;
 	
 	public BrainBehaviour (Agent myAgent, HashSet<String> agentNames) {
 		this.myAgent = myAgent;
@@ -157,7 +158,12 @@ public class BrainBehaviour extends FSMBehaviour {
 	}
 	
 	public void addOpenNodes(String newOpenNode) {
-		if (!this.getMap().hasNode(newOpenNode))	this.openNodes.add(newOpenNode);
+		if (!this.openNodes.contains(newOpenNode)) {
+			this.openNodes.add(newOpenNode);
+		}
+		if (!this.getMap().hasNode(newOpenNode))	{
+			this.getMap().addNode(newOpenNode, MapAttribute.open);
+		}
 	}
 	
 	public void removeOpenNodes(String node) {
@@ -174,6 +180,7 @@ public class BrainBehaviour extends FSMBehaviour {
 	
 	public void addClosedNodes(String newNode) {
 		if (!this.closedNodes.contains(newNode))	this.closedNodes.add(newNode);
+		this.getMap().addNode(newNode, MapAttribute.closed);
 	}
 	
 	public void fuseMap(MapRepresentation otherMap) {
@@ -270,5 +277,17 @@ public class BrainBehaviour extends FSMBehaviour {
 	
 	public void addTimeSoughtMeeting(int moreTime) {
 		this.timeSoughtMeeting += moreTime;
+	}
+
+	public int getWaitOutMeeting() {
+		return waitOutMeeting;
+	}
+
+	public void setWaitOutMeeting(int waitOutMeeting) {
+		this.waitOutMeeting = waitOutMeeting;
+	}
+	
+	public void addWaitOutMeeting(int moreMeeting) {
+		this.waitOutMeeting += moreMeeting;
 	}
 }
