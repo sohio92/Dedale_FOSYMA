@@ -252,7 +252,8 @@ public class BrainBehaviour extends FSMBehaviour {
 	}
 
 	public HashSet<String> getGolemStench() {
-		return golemStench;
+		//return golemStench;
+		return ((ExploreMultiAgent)this.myAgent).getStenchAround();
 	}
 
 	public void setGolemStench(HashSet<String> golemStench) {

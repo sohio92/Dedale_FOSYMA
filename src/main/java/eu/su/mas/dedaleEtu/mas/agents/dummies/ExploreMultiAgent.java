@@ -389,14 +389,17 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
 		
 		HashSet<String> golemStench = new HashSet<String>();
-		while (iter.hasNext()) {
-			Couple<String,List<Couple<Observation,Integer>>> nodeObserved = iter.next();
+		//while (iter.hasNext()) {
+			//Couple<String,List<Couple<Observation,Integer>>> nodeObserved = iter.next();
+		for (Couple<String,List<Couple<Observation,Integer>>> nodeObserved : lobs) {		
 			// If something is observed
 			if (nodeObserved.getRight().size() > 0) {
 				// For everything that is observed, check if we smell the golem's stench
 				for (Couple<Observation,Integer> observation: nodeObserved.getRight()) {
 					// Maybe wrong string value
-					if (observation.getLeft().equals("Stench"))	golemStench.add(nodeObserved.getLeft());
+					if (observation.getLeft().toString().equals("Stench"))	{
+						golemStench.add(nodeObserved.getLeft());
+					}
 				}
 			}
 		}

@@ -130,7 +130,9 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			
 		} else {
 			decision = "Patrol";
-			if (this.brain.getGolemStench().size() > 0)	decision = "Hunt";
+			if (this.brain.getGolemStench().size() > 0)	{
+				decision = "Hunt";
+			}
 		}
 		
 		// Maybe send them more to the most interested agents?
