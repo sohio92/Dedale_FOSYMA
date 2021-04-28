@@ -145,6 +145,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			
 		} else {
 			decision = "Patrol";
+			this.brain.updateGolemStench();
 			if (this.brain.getGolemStench().size() > 0)	{
 				decision = "Hunt";
 			}

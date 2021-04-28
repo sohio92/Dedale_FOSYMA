@@ -40,7 +40,7 @@ public class BrainBehaviour extends FSMBehaviour {
 	private List<String> huntingHistory;
 	
 	// Stench detected
-	private HashSet<String> golemStench;
+	private List<String> golemStench;
 	
 	// The agents I'm interested in
 	private ArrayList<AgentKnowledge> interestingAgents;
@@ -259,11 +259,14 @@ public class BrainBehaviour extends FSMBehaviour {
 	}
 
 	public List<String> getGolemStench() {
-		//return golemStench;
-		return ((ExploreMultiAgent)this.myAgent).getStenchAround();
+		return golemStench;
+	}
+	
+	public void updateGolemStench() {
+		this.golemStench = ((ExploreMultiAgent)this.myAgent).getStenchAround();
 	}
 
-	public void setGolemStench(HashSet<String> golemStench) {
+	public void setGolemStench(List<String> golemStench) {
 		this.golemStench = golemStench;
 	}
 

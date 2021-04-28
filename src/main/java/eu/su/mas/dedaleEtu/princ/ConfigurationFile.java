@@ -33,6 +33,8 @@ public final class ConfigurationFile {
 	 * Required by the environment class to be able to load it. Currently, only one type of environment is available
 	 */
 	public static EnvironmentType ENVIRONMENT_TYPE=EnvironmentType.GS;
+	/* cas autre que dammier*/
+	//public static EnvironmentType ENVIRONMENT_TYPE=EnvironmentType.GS.MANUAL;
 	
 	/**
 	 * Name of the agent in charge of the environment E/S
@@ -108,7 +110,7 @@ public final class ConfigurationFile {
 	/**
 	 * Parameter used to generate the environment 
 	 */
-	public static Integer ENVIRONMENT_SIZE=10;
+	public static Integer ENVIRONMENT_SIZE=5;
 	
 	/**
 	 * Parameter used to perceive the wumpus trough its smell

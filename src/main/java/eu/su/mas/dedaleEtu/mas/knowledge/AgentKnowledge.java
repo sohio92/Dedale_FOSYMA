@@ -32,6 +32,7 @@ public class AgentKnowledge implements Serializable{
 	private List<String> pathToAgent;
 	
 	private double meetUtility = 0; // How much do you want to meet me ?
+	private List<String> possibility;
 	
 	public AgentKnowledge(String name) {
 		this.name = name;
@@ -54,6 +55,7 @@ public class AgentKnowledge implements Serializable{
 					this.lastAction = content.getLastAction();
 					this.lastPosition = content.getLastPosition();
 					this.meetUtility = content.getMeetUtility();
+					this.possibility = content.getPossibility();
 				}
 				
 				if (!this.map.hasNode(lastPosition)) {
@@ -112,6 +114,9 @@ public class AgentKnowledge implements Serializable{
 	/*
 	 * Getters and setters
 	 */
+	public List<String> getPossibility() {
+		return possibility;
+	}
 	
 	public String getName() {
 		return name;

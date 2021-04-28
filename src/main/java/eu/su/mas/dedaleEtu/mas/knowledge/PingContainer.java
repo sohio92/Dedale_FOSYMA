@@ -24,16 +24,29 @@ public class PingContainer implements Serializable {
 	
 	// Do I want to meet you?
 	private double meetUtility;
+
+	
 	
 	// where is the golem ?
 	// null if I don't know
 	// == "position" of golem if I know where it is
+	private List<String> possibility;
 	
 	public PingContainer(ExploreMultiAgent myAgent, String otherAgent) {
 		this.setLastPosition(myAgent.getCurrentPosition());
 		
+		this.setPossibility(myAgent.getStenchAround());
+		
 		this.setLastAction(myAgent.getBrain().getLastDecision());
 		this.setMeetUtility(myAgent.getBrain().getAgentsKnowledge().get(otherAgent).getMeetUtility());
+	}
+
+	private void setPossibility(List<String> stenchAround) {
+		this.possibility = stenchAround;
+	}
+	
+	public List<String> getPossibility() {
+		return possibility;
 	}
 
 	public String getLastPosition() {
