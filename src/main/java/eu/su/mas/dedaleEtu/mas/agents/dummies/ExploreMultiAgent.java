@@ -1,7 +1,9 @@
 package eu.su.mas.dedaleEtu.mas.agents.dummies;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import org.graphstream.graph.Node;
 
@@ -69,6 +71,9 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	
 	// What is my surrounding's range
 	private int maxRange = 4;
+	
+	// Time to sleep between each step to see whats going on
+	private int timeSleep = 500;
 	
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -305,7 +310,11 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	
 	public void moveToIntention(String newNode, List<String> newPath) {
 		this.setPath(newPath);
-		this.getBrain().setStuck(this.moveTo(newNode));
+		this.getBrain().setStuck(!this.moveTo(newNode));
+	}
+	
+	public void moveToIntention(String newNode) {
+		this.getBrain().setStuck(!this.moveTo(newNode));
 	}
 	
 	public BrainBehaviour getBrain() {
@@ -334,7 +343,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		 * Just added here to let you see what the agent is doing, otherwise he will be too quick
 		 */
 		try {
-			this.doWait(500);
+			this.doWait(this.getTimeSleep());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -354,7 +363,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 
 		//2) get the surrounding nodes and, if not in closedNodes, add them to open nodes.
 		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
-		String nodeOpen = "";
+		List<String> nextOpen = new ArrayList<String>();
 		String nodeId = "";
 		while(iter.hasNext()){
 			nodeId=iter.next().getLeft();
@@ -368,11 +377,49 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 					//the node exist, but not necessarily the edge
 					if (map.addEdge(myPosition, nodeId) == true)	this.addDiffEdges(1);
 				}
-				nodeOpen = nodeId;
+				nextOpen.add(nodeId);
 			}
 		}
 		
+		String nodeOpen = "";
+		if (nextOpen.size() > 0) {
+			Collections.shuffle(nextOpen);
+			nodeOpen = nextOpen.get(0);
+		}
+		
+		//list of observations associated to the currentPosition
+		//List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
+		//this.sayConsole(" - State of the observations : "+lobs);	
+		
 		//?this.brain.fuseMap(map);
 		return nodeOpen;
+	}
+	
+	// Returns what we smell
+	public HashSet<String> getStenchAround(){
+		List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this).observe();
+		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
+		
+		HashSet<String> golemStench = new HashSet<String>();
+		//while (iter.hasNext()) {
+			//Couple<String,List<Couple<Observation,Integer>>> nodeObserved = iter.next();
+		for (Couple<String,List<Couple<Observation,Integer>>> nodeObserved : lobs) {		
+			// If something is observed
+			if (nodeObserved.getRight().size() > 0) {
+				// For everything that is observed, check if we smell the golem's stench
+				for (Couple<Observation,Integer> observation: nodeObserved.getRight()) {
+					// Maybe wrong string value
+					if (observation.getLeft().toString().equals("Stench"))	{
+						golemStench.add(nodeObserved.getLeft());
+					}
+				}
+			}
+		}
+		
+		return golemStench;
+	}
+	
+	public int getTimeSleep() {
+		return this.timeSleep;
 	}
 }

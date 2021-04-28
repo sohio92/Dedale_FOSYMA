@@ -295,19 +295,19 @@ public class MapRepresentation implements Serializable {
 		this.diffEdge = 0;
 		this.diffNodes = 0;
 	}
+	
+	/*
 	public SerializableSimpleGraph<String, MapAttribute> getMissingFromMap(MapRepresentation otherMap){
 		// Returns the nodes and edges that the current map lacks
 		SerializableSimpleGraph<String, MapAttribute> missingSg = new SerializableSimpleGraph<String, MapAttribute>();
 		SerializableSimpleGraph<String, MapAttribute> otherSg = otherMap.getSg();
-		SerializableSimpleGraph<String, MapAttribute> mySg = this.getSg(); // Temporary copy of this.sg
-		System.out.println(otherMap.ownerName + this.ownerName);
+		SerializableSimpleGraph<String, MapAttribute> mySg = this.getSg();
 
 		// Adding the missing nodes
 		Set<SerializableNode<String, MapAttribute>> otherNodes = otherSg.getAllNodes();
 		for (SerializableNode<String, MapAttribute> n : otherNodes) {
 			if (!mySg.getAllNodes().contains(n)) {
 				missingSg.addNode(n.getNodeId(), n.getNodeContent());
-				mySg.addNode(n.getNodeId(), n.getNodeContent());
 			}
 		}
 
@@ -315,12 +315,36 @@ public class MapRepresentation implements Serializable {
 		Integer nbEd = 0;
 		for (SerializableNode<String, MapAttribute> n : otherNodes) {
 			for (String s : otherSg.getEdges(n.getNodeId())) {
-				if (!mySg.getEdges(n.getNodeId()).contains(s) && s != null) {
+				if (s != null && !mySg.getEdges(n.getNodeId()).contains(s)) {
 					if (!missingSg.getAllNodes().toString().contains(s)) missingSg.addNode(s);
 					missingSg.addEdge(nbEd.toString(), n.getNodeId(), s);
 					mySg.addEdge(nbEd.toString(), n.getNodeId(), s);
 					nbEd++;
 				}
+			}
+		}
+
+		return missingSg;
+	}*/
+	
+	public SerializableSimpleGraph<String, MapAttribute> getMissingFromMap(MapRepresentation otherMap){
+		// Returns the nodes and edges that the current map lacks
+		SerializableSimpleGraph<String, MapAttribute> missingSg = new SerializableSimpleGraph<String, MapAttribute>();
+		SerializableSimpleGraph<String, MapAttribute> otherSg = otherMap.getSg();
+		SerializableSimpleGraph<String, MapAttribute> mySg = this.getSg();
+
+		// Adding the missing nodes
+		Set<SerializableNode<String, MapAttribute>> otherNodes = otherSg.getAllNodes();
+
+
+		// Adding the missing edges
+		Integer nbEd = 0;
+		for (SerializableNode<String, MapAttribute> n : otherNodes) {
+			for (String s : otherSg.getEdges(n.getNodeId())) {
+				nbEd ++;
+				if (!mySg.getAllNodes().contains(n))	missingSg.addNode(n.getNodeId(), n.getNodeContent());
+				if (!missingSg.getAllNodes().toString().contains(s))	missingSg.addNode(s, MapAttribute.open);
+				if (s != null || s != "null")	missingSg.addEdge(nbEd.toString(), n.getNodeId(), s);
 			}
 		}
 
@@ -331,7 +355,7 @@ public class MapRepresentation implements Serializable {
 		for (int i=0; i<otherPath.size()-1; i++) {
 			if (this.g.getNode(otherPath.get(i)) == null)	this.addNode(otherPath.get(i), MapAttribute.open);
 			if (this.g.getNode(otherPath.get(i+1)) == null)	this.addNode(otherPath.get(i+1), MapAttribute.open);
-			this.addEdge(otherPath.get(i), otherPath.get(i+1));
+			if (this.g.getNode(otherPath.get(i)) != this.g.getNode(otherPath.get(i+1)))	this.addEdge(otherPath.get(i), otherPath.get(i+1));
 		}
 	}
 	

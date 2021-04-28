@@ -48,7 +48,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 	}
 
 	@Override
-	public void action() {
+	public void action() {		
 		this.agentsAround = ((ExploreMultiAgent)this.myAgent).getAgentsAround();
 		if (this.agentsAround.size() != 0) {
 			//((ExploreMultiAgent)this.myAgent).sayConsole("The other agents in my surroundings are : " + this.agentsAround);
@@ -64,6 +64,28 @@ public class DecisionBehaviour extends OneShotBehaviour {
 
 	// Retrieve the information necessary to take a decision
 	private void retrieveInformation() {
+		try {
+			// Update my knowledge of the nodes
+			this.brain.updateNodesWithMap();
+			
+			// Check if exploration is finished
+			if (this.decision != null && this.decision.equals("Exploration") && (this.brain.getOpenNodes().size() == 0
+					|| this.brain.getClosedNodes().size() == this.brain.getMap().getNbNodes()))
+				this.brain.finishExploration();
+
+			// Check if an agent is not to be found
+			for (AgentKnowledge otherKnowledge : this.brain.getAgentsKnowledge().values()) {
+				if (otherKnowledge.getLastPosition() != null
+						&& otherKnowledge.getLastPosition().equals(this.brain.getAgent().getCurrentPosition())) {
+					otherKnowledge.setLastPosition(null);
+					this.brain.getAgent().sayConsole(otherKnowledge.getName() + " is not where it is supposed to be!");
+				}
+			}
+		} catch(Exception e) {
+			// The map wasn't ready
+			((ExploreMultiAgent)this.myAgent).sayConsole("My map wasn't ready to load");
+		}
+		
 		// How far are the other agents?
 		for (AgentKnowledge otherAgent : this.brain.getAgentsKnowledge().values()) {
 			otherAgent.computeDistance(this.brain.getMap(), this.myAgent.getCurrentPosition());
@@ -77,9 +99,20 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			}
 		}
 		
-		// Check golem
+		// Did we timeout the last meeting?
+		if (this.decision != null && !this.decision.equals("SeekMeeting")) {
+			this.brain.addWaitOutMeeting(1);
+			this.brain.setTimeSoughtMeeting(0);
+		}
 		
-		//
+		
+		// Have we finished the exploration?
+		if (((ExploreMultiAgent)this.myAgent).isLoaded() && !this.brain.isExplorationFinished() && this.brain.getOpenNodes().size() == 0)	this.brain.finishExploration();
+		
+		// Check golem
+		this.brain.setGolemStench(((ExploreMultiAgent)this.myAgent).getStenchAround());
+		//	Reseting history if nothing detected
+		if (this.brain.getGolemStench().size() == 0)	this.brain.setHuntingHistory(new ArrayList<String>());
 	}
 
 	// Takes a decision based on surroundings
@@ -104,9 +137,18 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			//((ExploreMultiAgent)this.myAgent).sayConsole("I want to meet : " + this.interestingAgents);
 			
 			// Start a meeting with the interesting agents
-			if (this.interestingAgents.size() != 0)	decision = "SeekMeeting";
+			if (this.interestingAgents.size() != 0 && this.brain.getTimeSoughtMeeting() < 3 && this.brain.getWaitOutMeeting() > 5) {
+				decision = "SeekMeeting";
+				this.brain.setWaitOutMeeting(0);
+				this.brain.addTimeSoughtMeeting(1);
+			}
 			
-		} else decision = "Patrol";
+		} else {
+			decision = "Patrol";
+			if (this.brain.getGolemStench().size() > 0)	{
+				decision = "Hunt";
+			}
+		}
 		
 		// Maybe send them more to the most interested agents?
 		// Sending my current path if there are agents around me
@@ -123,7 +165,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		double utility = otherAgent.getShareWorth();
 		if (this.whoWantsToMeet.contains(otherAgent.getName()))	utility *= 2;
 	
-		return utility;
+		return Math.floor(utility * 1000);
 	}
 	
 	// Manages the case where agents are stuck

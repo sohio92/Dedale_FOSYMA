@@ -29,18 +29,6 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.lang.acl.UnreadableException;
 
-/**
- * This behaviour allows an agent to explore the environment and learn the associated topological map.
- * The algorithm is a pseudo - DFS computationally consuming because its not optimised at all.</br>
- * 
- * When all the nodes around him are visited, the agent randomly select an open node and go there to restart its dfs.</br> 
- * This (non optimal) behaviour is done until all nodes are explored. </br> 
- * 
- * Warning, this behaviour does not save the content of visited nodes, only the topology.</br> 
- * Warning, this behaviour is a solo exploration and does not take into account the presence of other agents (or well) and indefinitely tries to reach its target node
- * @author hc
- *
- */
 public class PatrolBehaviour extends OneShotBehaviour {
 
 	private static final long serialVersionUID = 8567689731496787661L;
@@ -86,16 +74,19 @@ public class PatrolBehaviour extends OneShotBehaviour {
 			this.g = this.myMap.getGraph();
 			
 			// Seek the closest friends to share my map!
-			int lowestSize = Integer.MAX_VALUE;
-			for (AgentKnowledge otherAgent: this.brain.getAgentsKnowledge().values()) {
-				if (otherAgent.getLastAction() != null && otherAgent.getLastAction().equals("Exploration")) {
-					otherAgent.computeDistance(this.myMap, myPosition);
-					if (otherAgent.getDistance() < lowestSize) {
-						nextPath = otherAgent.getPathToAgent();
-						this.nextNode = nextPath.get(0);
+			if (this.brain.isStuck()) {
+				int lowestSize = Integer.MAX_VALUE;
+				for (AgentKnowledge otherAgent: this.brain.getAgentsKnowledge().values()) {
+					if (otherAgent.getLastAction() != null && otherAgent.getLastAction().equals("Exploration")) {
+						otherAgent.computeDistance(this.myMap, myPosition);
+						if (otherAgent.getDistance() < lowestSize) {
+							nextPath = otherAgent.getPathToAgent();
+							this.nextNode = nextPath.get(0);
+						}
 					}
 				}
-			}			
+			}
+			
 			// Otherwise randomly wander
 			List<Couple<String,List<Couple<Observation,Integer>>>> lobs = ((AbstractDedaleAgent)this.myAgent).observe();
 			Collections.shuffle(lobs);

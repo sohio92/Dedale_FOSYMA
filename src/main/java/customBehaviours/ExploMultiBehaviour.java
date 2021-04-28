@@ -79,7 +79,7 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 		// Retrieve the current position
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 		
-		if (myPosition!=null){		
+		if (myPosition!=null){
 			// New path
 			List<String> nextPath = new ArrayList<String>();
 			
@@ -87,13 +87,26 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 			this.openNodes = brain.getOpenNodes();
 			this.closedNodes = brain.getClosedNodes();
 			this.myMap = brain.getMap();
+			
+			boolean willContinuePath = false;
 
 			//3) while openNodes is not empty, continues.
 			if (this.openNodes.isEmpty()){
-				this.brain.setExplorationFinished(true);
-				((ExploreMultiAgent)this.myAgent).sayConsole("Exploration successufully done.");			
+				this.brain.finishExploration();
 			}else{
 				//4) select next move.
+				// If stuck, go to a node at random
+				if (this.brain.isStuck() == true) {
+					List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();
+					Collections.shuffle(lobs);
+					
+					this.nextNode = lobs.get(0).getLeft();
+					nextPath.add(myPosition);
+					nextPath.add(this.nextNode);
+					
+					((ExploreMultiAgent)this.myAgent).sayConsole("I am stuck! Moving out of the way to " + this.nextNode);
+				}
+				
 				//4.1 If there exist one open node directly reachable, go for it,
 				//	 otherwise choose the closest node from the openNode list and go for it
 				
@@ -104,37 +117,49 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 						nextPath.add(myPosition);
 						nextPath.add(nextNode);
 					} else {
-						//no directly accessible openNode
-						//chose one, compute the path and take the first step.
-						ArrayList<List<String>> paths = new ArrayList<List<String>>();
-						for (int i = 0; i < this.openNodes.size(); i++) {
-							try {
-								paths.add(this.myMap.getShortestPath(myPosition, this.openNodes.get(i)));
-							} catch (java.lang.IndexOutOfBoundsException | java.lang.NullPointerException e) {
-								// No path to node
+						
+						// Continue a bit on the previous chosen path
+						if (this.brain.getLastPath() != null) {
+							int pathProgress = this.brain.getLastPath().indexOf(myPosition);
+							if (pathProgress == -1 || this.brain.getLastPath().size() <= 2) {
+								// We are not on the previous path (maybe impossible?)
+							} else if (pathProgress <= Math.floor(this.brain.getLastPath().size()/2)) {
+								// We want to do at least half of the previous path to make another decision
+								this.nextNode = this.brain.getLastPath().get(pathProgress + 1);
+								willContinuePath = true;
 							}
 						}
-						Collections.sort(paths, Comparator.comparing(a -> a.size()));
 						
-						// Giving the exploration priority lexicographically
-						int index = 0;
-						for (String otherAgent: ((ExploreMultiAgent)this.myAgent).getAgentsAround()) {
-							if (index >= paths.size() - 1)	break;
-							if (this.myAgent.getName().compareTo(otherAgent) == -1)	index ++;
-						}
-						
-						nextPath = paths.get(index);
-						this.nextNode = nextPath.get(0);
+						if (willContinuePath == false) {
+							//no directly accessible openNode
+							//chose one, compute the path and take the first step.
+							ArrayList<List<String>> paths = new ArrayList<List<String>>();
+							for (int i = 0; i < this.openNodes.size(); i++) {
+								try {
+									paths.add(this.myMap.getShortestPath(myPosition, this.openNodes.get(i)));
+								} catch (java.lang.IndexOutOfBoundsException | java.lang.NullPointerException e) {
+									// No path to node
+								}
+							}
+							Collections.sort(paths, Comparator.comparing(a -> a.size()));
+							
+							// Giving the exploration priority lexicographically
+							int index = 0;
+							for (String otherAgent: ((ExploreMultiAgent)this.myAgent).getAgentsAround()) {
+								if (this.myAgent.getName().compareTo(otherAgent) == -1)	index ++;
+							}
+							
+							if (index >= paths.size() - 1)	index = paths.size() - 1;
+							
+							nextPath = paths.get(index);
+							this.nextNode = nextPath.get(0);
+						}	
 					}
 
 				}
-
-				//list of observations associated to the currentPosition
-				//List<Couple<Observation,Integer>> lObservations= lobs.get(0).getRight();
-				//System.out.println(this.myAgent.getLocalName()+" - State of the observations : "+lobs);	
 				
 				//((ExploreMultiAgent)this.myAgent).sayConsole("I want to go to " + this.nextNode + " I am following this path : " + nextPath);
-				this.brain.setLastPath(nextPath);
+				if (willContinuePath == false)	this.brain.setLastPath(nextPath);
 				((ExploreMultiAgent)this.myAgent).moveToIntention(this.nextNode, nextPath);
 			}
 		}		
