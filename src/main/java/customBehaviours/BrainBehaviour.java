@@ -65,6 +65,7 @@ public class BrainBehaviour extends FSMBehaviour {
 		this.decisionToInt.put("SeekMeeting", 2);
 		this.decisionToInt.put("Patrol", 3);
 		this.decisionToInt.put("Hunt", 4);
+		//this.decisionToInt.put("Sleep", 5); //do nothing
 	}
 	
 	public void onStart() {
@@ -251,6 +252,10 @@ public class BrainBehaviour extends FSMBehaviour {
 
 	public void setExplorationFinished(boolean explorationFinished) {
 		this.explorationFinished = explorationFinished;
+	}
+	
+	public void setHuntFinished(boolean huntFinished) {
+		this.huntFinished = huntFinished;
 	}
 
 	public List<String> getHuntingHistory() {
