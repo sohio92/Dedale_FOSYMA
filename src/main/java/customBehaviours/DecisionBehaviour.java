@@ -110,7 +110,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		if (((ExploreMultiAgent)this.myAgent).isLoaded() && !this.brain.isExplorationFinished() && this.brain.getOpenNodes().size() == 0)	this.brain.finishExploration();
 		
 		// Check golem
-		this.brain.setGolemStench(((ExploreMultiAgent)this.myAgent).getStenchAround());
+		this.brain.updateGolemStench();
 		//	Reseting history if nothing detected
 		if (this.brain.getGolemStench().size() == 0)	this.brain.setHuntingHistory(new ArrayList<String>());
 	}

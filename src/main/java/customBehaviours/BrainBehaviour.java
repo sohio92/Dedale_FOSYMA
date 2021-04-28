@@ -37,6 +37,7 @@ public class BrainBehaviour extends FSMBehaviour {
 	private int timeStuck = 0;
 	
 	private boolean explorationFinished = false;
+	private boolean huntFinished = false;
 	private List<String> huntingHistory = new ArrayList<String>();
 	
 	// Stench detected
@@ -48,6 +49,8 @@ public class BrainBehaviour extends FSMBehaviour {
 	// SeekMeetingTimeOut
 	private int timeSoughtMeeting = 0;
 	private int waitOutMeeting = 5;
+
+	
 	
 	public BrainBehaviour (Agent myAgent, HashSet<String> agentNames) {
 		this.myAgent = myAgent;
@@ -240,6 +243,10 @@ public class BrainBehaviour extends FSMBehaviour {
 
 	public boolean isExplorationFinished() {
 		return explorationFinished;
+	}
+	
+	public boolean isHuntFinished() {
+		return huntFinished;
 	}
 
 	public void setExplorationFinished(boolean explorationFinished) {
