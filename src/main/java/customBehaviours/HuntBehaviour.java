@@ -93,13 +93,11 @@ public class HuntBehaviour extends OneShotBehaviour{
 		
 		// Doing this in case observation range greater than one
 		List<String> nextPath = this.brain.getMap().getShortestPath(myPosition, nextNode);
-		if (nextPath.size() >0) {
+		if (nextPath.size() > 0) {
 			nextNode = nextPath.get(0);	
 			this.brain.setLastPath(nextPath);
 			((ExploreMultiAgent)this.myAgent).moveToIntention(nextNode, nextPath);
 		}
-		
-		
 	}
 
 
