@@ -66,7 +66,7 @@ public class HuntBehaviour extends OneShotBehaviour{
 		// Who is currently hunting with me?
 		HashSet<String> hunters = new HashSet<String>();
 		for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
-			if (otherKnowledge.getLastAction().equals("Hunt"))	hunters.add(otherKnowledge.getName());
+			if (otherKnowledge.getLastAction() != null && otherKnowledge.getLastAction().equals("Hunt"))	hunters.add(otherKnowledge.getName());
 		}
 
 
@@ -88,15 +88,18 @@ public class HuntBehaviour extends OneShotBehaviour{
 		
 		// If we couldn't find any node, we have to check in the history
 		if (nextNode == null) {
-			nextNode = huntingHistory.get(-1);
+			nextNode = huntingHistory.get(huntingHistory.size()-1);
 		}
 		
 		// Doing this in case observation range greater than one
 		List<String> nextPath = this.brain.getMap().getShortestPath(myPosition, nextNode);
-		nextNode = nextPath.get(0);	
+		if (nextPath.size() >0) {
+			nextNode = nextPath.get(0);	
+			this.brain.setLastPath(nextPath);
+			((ExploreMultiAgent)this.myAgent).moveToIntention(nextNode, nextPath);
+		}
 		
-		this.brain.setLastPath(nextPath);
-		((ExploreMultiAgent)this.myAgent).moveToIntention(nextNode, nextPath);
+		
 	}
 
 
