@@ -84,12 +84,13 @@ public class HuntBehaviour extends OneShotBehaviour{
 		// Updating history
 		this.brain.addHuntingHistory(myPosition);
 		
-		// Randomly choosing which stench to go
+		// Choosing which stench, depending on its distance to other hunters
 		String nextNode = null;
 		Collections.shuffle(golemStench);
 		for (String otherNode: golemStench) {
 			if (otherNode.equals(myPosition))	continue;
 			if (huntingHistory.contains(otherNode))	continue;
+			
 			nextNode = otherNode;
 			break;
 		}

@@ -106,7 +106,7 @@ public class MapRepresentation implements Serializable {
 				if (mapAttribute.toString() == MapAttribute.closed.toString() || mapAttribute.toString() == MapAttribute.agent.toString()) {
 					n.clearAttributes();
 					n.setAttribute("ui.class", mapAttribute.toString());
-					this.addNode(id, mapAttribute);
+					this.sg.addNode(id, mapAttribute);
 					n.setAttribute("ui.label",id);
 				}
 			}

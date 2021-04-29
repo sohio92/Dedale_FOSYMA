@@ -125,7 +125,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		else {
 			HashSet<String> hunters_pos = new HashSet<String>();
 			for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
-				if (otherKnowledge.getLastAction() != null && otherKnowledge.getLastAction().equals("Hunt")){
+				if (otherKnowledge.getLastAction() != null && (otherKnowledge.getLastAction().equals("Hunt") || otherKnowledge.getLastAction().equals("HuntFinished"))){
 					hunters_pos.add(otherKnowledge.getLastPosition());
 				}
 			}
@@ -187,6 +187,10 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			this.brain.updateGolemStench();
 			if (this.brain.getGolemStench().size() > 0)	{
 				decision = "Hunt";
+			}
+			
+			if (this.brain.isHuntFinished() == true) {
+				decision = "HuntFinished";
 			}
 		}
 		
