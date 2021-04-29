@@ -100,10 +100,13 @@ public class BrainBehaviour extends FSMBehaviour {
 		this.registerTransition("Decision", "Hunt", (int) this.decisionToInt.get("Hunt"));
 		this.registerTransition("Hunt", "Decision", (int) this.decisionToInt.get("Decision"));
 	
-		this.registerLastState(new HuntFinishedBehaviour(this), "HuntFinished");
+		this.registerState(new HuntFinishedBehaviour(this), "HuntFinished");
 		
 		this.registerTransition("Hunt", "HuntFinished", (int) this.decisionToInt.get("HuntFinished"));
 		this.registerTransition("Exploration", "HuntFinished", (int) this.decisionToInt.get("HuntFinished"));
+		
+		this.registerTransition("Decision", "HuntFinished", (int) this.decisionToInt.get("HuntFinished"));
+		this.registerTransition("HuntFinished", "Decision", (int) this.decisionToInt.get("Decision"));
 		
 	}
 	

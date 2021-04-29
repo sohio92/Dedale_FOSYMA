@@ -107,8 +107,11 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 					nextPath.add(this.nextNode);
 					
 					if (this.brain.isStuck() == true)	{
-						if (this.brain.getGolemStench().size() > 0)	this.brain.addExplorationTimeOut(1);
-						((ExploreMultiAgent)this.myAgent).sayConsole("I am stuck! Moving out of the way to " + this.nextNode);
+						if (((ExploreMultiAgent)this.myAgent).getStenchAround().size() > 0)	{
+							this.brain.addExplorationTimeOut(1);
+							((ExploreMultiAgent)this.myAgent).sayConsole("" + this.brain.getExplorationTimeOut());
+						}
+						//((ExploreMultiAgent)this.myAgent).sayConsole("I am stuck! Moving out of the way to " + this.nextNode);
 					}
 					//if (randomMove == true)	((ExploreMultiAgent)this.myAgent).sayConsole("I want to randomly move to " + this.nextNode);
 				}
@@ -182,7 +185,11 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 		this.brain.registerTransition("Exploration", "HuntFinished", (int) this.decisionToInt.get("HuntFinished"));
 		
 		// If by chance, we stuck a golem
-		if (this.brain.isHuntFinished() && this.brain.getExplorationTimeOut() > 50)	return this.decisionToInt.get("HuntFinished");
+		if (this.brain.isHuntFinished() && this.brain.getExplorationTimeOut() > 30)	{
+			this.brain.removeOpenNodes(this.nextNode);
+			this.brain.addClosedNodes(this.nextNode);
+			return this.decisionToInt.get("HuntFinished");
+		}
 		else	return this.decisionToInt.get("Decision");
 	}
 }

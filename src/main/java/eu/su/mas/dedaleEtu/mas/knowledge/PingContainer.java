@@ -23,9 +23,7 @@ public class PingContainer implements Serializable {
 	private String lastAction;
 	
 	// Do I want to meet you?
-	private double meetUtility;
-
-	
+	private double meetUtility;	
 	
 	// where is the golem ?
 	// null if I don't know

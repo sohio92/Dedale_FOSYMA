@@ -113,7 +113,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		
 		
 		// Have we finished the exploration?
-		if (((ExploreMultiAgent)this.myAgent).isLoaded() && !this.brain.isExplorationFinished() && this.brain.getOpenNodes().size() == 0)	this.brain.finishExploration();
+		//if (((ExploreMultiAgent)this.myAgent).isLoaded() && !this.brain.isExplorationFinished() && this.brain.getOpenNodes().size() == 0)	this.brain.finishExploration();
 		
 		// Check golem
 		this.brain.updateGolemStench();
@@ -181,8 +181,6 @@ public class DecisionBehaviour extends OneShotBehaviour {
 				this.brain.setWaitOutMeeting(0);
 				this.brain.addTimeSoughtMeeting(1);
 			}
-			
-
 			
 		} else {
 			decision = "Patrol";

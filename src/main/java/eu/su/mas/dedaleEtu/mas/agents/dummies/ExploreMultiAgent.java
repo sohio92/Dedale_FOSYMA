@@ -70,10 +70,10 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	private boolean loaded = false;
 	
 	// What is my surrounding's range
-	private int maxRange = 4;
+	private int maxRange = 6;
 	
 	// Time to sleep between each step to see whats going on
-	private int timeSleep = 100;
+	private int timeSleep = 500;
 	
 	/**
 	 * This method is automatically called when "agent".start() is executed.
@@ -353,6 +353,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		MapRepresentation map = this.getBrain().getMap();
 		
 		//1) remove the current node from openlist and add it to closedNodes.
+		if (this.getBrain().getOpenNodes().contains(myPosition))	this.getBrain().resetExplorationTimeOut();
 		this.getBrain().addClosedNodes(myPosition);
 		this.getBrain().removeOpenNodes(myPosition);
 		map.addNode(myPosition,MapAttribute.closed);
@@ -369,7 +370,6 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		while(iter.hasNext()){
 			nodeId=iter.next().getLeft();
 			if (!this.getBrain().getClosedNodes().contains(nodeId)){
-				this.getBrain().resetExplorationTimeOut();
 				if (!this.getBrain().getOpenNodes().contains(nodeId)){
 					this.getBrain().addOpenNodes(nodeId);
 					map.addNode(nodeId, MapAttribute.open);
