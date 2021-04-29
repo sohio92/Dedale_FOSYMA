@@ -45,7 +45,6 @@ public class AgentKnowledge implements Serializable{
 	
 	public boolean unpackMessage(BrainBehaviour otherBrain, ACLMessage newMessage) {
 		boolean recentMessage = newMessage.getPostTimeStamp() >= this.mostRecentPing;
-		
 		if (newMessage.getProtocol().equals("PingProtocol")) {
 			
 			try {

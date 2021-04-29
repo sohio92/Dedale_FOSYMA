@@ -109,7 +109,6 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 					if (this.brain.isStuck() == true)	{
 						if (((ExploreMultiAgent)this.myAgent).getStenchAround().size() > 0)	{
 							this.brain.addExplorationTimeOut(1);
-							((ExploreMultiAgent)this.myAgent).sayConsole("" + this.brain.getExplorationTimeOut());
 						}
 						//((ExploreMultiAgent)this.myAgent).sayConsole("I am stuck! Moving out of the way to " + this.nextNode);
 					}

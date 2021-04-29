@@ -49,9 +49,9 @@ public class ListenBehaviour extends CyclicBehaviour{
 	private void listen() {		
 		// Receiving a message
 		final MessageTemplate msgTemplate = MessageTemplate.MatchPerformative(ACLMessage.INFORM);			
-		final ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
+		ACLMessage msgReceived = this.myAgent.receive(msgTemplate);
 		
-		if (msgReceived != null) {
+		while (msgReceived != null) {
 			// Checking if the received message is an echo
 			String otherName = msgReceived.getSender().getLocalName();
 			final int compareNames = otherName.compareTo(this.myAgent.getAID().getLocalName());
@@ -73,6 +73,7 @@ public class ListenBehaviour extends CyclicBehaviour{
 					this.shareMapProcess(otherName, msgReceived);
 				}
 			}
+			msgReceived = this.myAgent.receive(msgTemplate);
 		}
 	}
 	

@@ -59,12 +59,12 @@ public final class ConfigurationFile {
 	/**
 	 * Not null when the environment is loaded; should be null if the environment is generated or already online
 	 */
-	public static String INSTANCE_TOPOLOGY=null;
+	//public static String INSTANCE_TOPOLOGY=null;
 	
 	//public static String INSTANCE_TOPOLOGY="resources/topology/map2020-topologyExam1-graph.dgs";
 	//public static String INSTANCE_TOPOLOGY="resources/topology/HouatTopology";
 	//public static String INSTANCE_TOPOLOGY=null;
-	//public static String INSTANCE_TOPOLOGY="resources/topology/map2020-topologyExam1-tree.dgs";
+	public static String INSTANCE_TOPOLOGY="resources/topology/map2020-topologyExam1-tree.dgs";
 	//public static String INSTANCE_TOPOLOGY="resources/topology/mapInterlocking1-topology";
 	//public static String INSTANCE_TOPOLOGY="resources/topology/mapInterlocking2-topology";
 	//public static String INSTANCE_TOPOLOGY="resources/map2018-topology";
@@ -79,8 +79,8 @@ public final class ConfigurationFile {
 	
 	// If the environment is loaded but you do not want to define elements on the map
 	
-	public static String INSTANCE_CONFIGURATION_ELEMENTS=null;
-	//public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/treasureHunt/map2019-elementsExam1";
+	//public static String INSTANCE_CONFIGURATION_ELEMENTS=null;
+	public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/treasureHunt/map2019-elementsExam1";
 	//public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/treasureHunt/Houat-elements";
 	//public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/treasureHunt/map2018-elements-ica";
 	//public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/interlocking/mapInterlocking1-elements";
@@ -113,7 +113,7 @@ public final class ConfigurationFile {
 	/**
 	 * Parameter used to generate the environment 
 	 */
-	public static Integer ENVIRONMENT_SIZE=5;
+	public static Integer ENVIRONMENT_SIZE=10;
 	
 	/**
 	 * Parameter used to perceive the wumpus trough its smell

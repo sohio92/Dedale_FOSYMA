@@ -182,7 +182,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 				this.brain.addTimeSoughtMeeting(1);
 			}
 			
-		} else {
+		} else if (this.brain.isHuntFinished() == false) {
 			decision = "Patrol";
 			this.brain.updateGolemStench();
 			if (this.brain.getGolemStench().size() > 0)	{
@@ -192,6 +192,9 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			if (this.brain.isHuntFinished() == true) {
 				decision = "HuntFinished";
 			}
+		}
+		else {
+			decision = "HuntFinished";
 		}
 		
 		// Maybe send them more to the most interested agents?
