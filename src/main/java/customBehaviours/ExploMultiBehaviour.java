@@ -106,7 +106,10 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 					nextPath.add(myPosition);
 					nextPath.add(this.nextNode);
 					
-					if (this.brain.isStuck() == true)	((ExploreMultiAgent)this.myAgent).sayConsole("I am stuck! Moving out of the way to " + this.nextNode);
+					if (this.brain.isStuck() == true)	{
+						if (this.brain.getGolemStench().size() > 0)	this.brain.addExplorationTimeOut(1);
+						((ExploreMultiAgent)this.myAgent).sayConsole("I am stuck! Moving out of the way to " + this.nextNode);
+					}
 					//if (randomMove == true)	((ExploreMultiAgent)this.myAgent).sayConsole("I want to randomly move to " + this.nextNode);
 				}
 				
@@ -176,6 +179,10 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 		this.brain.registerTransition("Decision", "Exploration", (int) this.decisionToInt.get("Exploration"));
 		this.brain.registerTransition("Exploration", "Decision", (int) this.decisionToInt.get("Decision"));
 		
-		return this.decisionToInt.get("Decision");
+		this.brain.registerTransition("Exploration", "HuntFinished", (int) this.decisionToInt.get("HuntFinished"));
+		
+		// If by chance, we stuck a golem
+		if (this.brain.isHuntFinished() && this.brain.getExplorationTimeOut() > 50)	return this.decisionToInt.get("HuntFinished");
+		else	return this.decisionToInt.get("Decision");
 	}
 }

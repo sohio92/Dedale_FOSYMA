@@ -37,6 +37,7 @@ public class BrainBehaviour extends FSMBehaviour {
 	private boolean isStuck = false;
 	private int timeStuck = 0;
 	
+	private int explorationTimeOut = 0;
 	private boolean explorationFinished = false;
 	private boolean huntFinished = false;
 	private List<String> huntingHistory = new ArrayList<String>();
@@ -68,7 +69,7 @@ public class BrainBehaviour extends FSMBehaviour {
 		this.decisionToInt.put("SeekMeeting", 2);
 		this.decisionToInt.put("Patrol", 3);
 		this.decisionToInt.put("Hunt", 4);
-		//this.decisionToInt.put("Sleep", 5); //do nothing
+		this.decisionToInt.put("HuntFinished", 5); //do nothing
 	}
 	
 	public void onStart() {
@@ -98,6 +99,11 @@ public class BrainBehaviour extends FSMBehaviour {
 		
 		this.registerTransition("Decision", "Hunt", (int) this.decisionToInt.get("Hunt"));
 		this.registerTransition("Hunt", "Decision", (int) this.decisionToInt.get("Decision"));
+	
+		this.registerLastState(new HuntFinishedBehaviour(this), "HuntFinished");
+		
+		this.registerTransition("Hunt", "HuntFinished", (int) this.decisionToInt.get("HuntFinished"));
+		this.registerTransition("Exploration", "HuntFinished", (int) this.decisionToInt.get("HuntFinished"));
 		
 	}
 	
@@ -329,6 +335,18 @@ public class BrainBehaviour extends FSMBehaviour {
 
 	public void setLastStenchDetected(String lastStenchDetected) {
 		this.lastStenchDetected = lastStenchDetected;
+	}
+
+	public int getExplorationTimeOut() {
+		return explorationTimeOut;
+	}
+
+	public void addExplorationTimeOut(int newTimeOut) {
+		this.explorationTimeOut += newTimeOut;
+	}
+	
+	public void resetExplorationTimeOut() {
+		this.explorationTimeOut = 0;
 	}
 	
 }

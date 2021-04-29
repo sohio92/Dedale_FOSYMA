@@ -336,7 +336,6 @@ public class MapRepresentation implements Serializable {
 		// Adding the missing nodes
 		Set<SerializableNode<String, MapAttribute>> otherNodes = otherSg.getAllNodes();
 
-
 		// Adding the missing edges
 		Integer nbEd = 0;
 		for (SerializableNode<String, MapAttribute> n : otherNodes) {

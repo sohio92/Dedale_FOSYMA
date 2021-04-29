@@ -144,7 +144,10 @@ public class HuntBehaviour extends OneShotBehaviour{
 		this.brain.registerTransition("Decision", "Hunt", (int) this.decisionToInt.get("Hunt"));
 		this.brain.registerTransition("Hunt", "Decision", (int) this.decisionToInt.get("Decision"));
 		
-		return this.decisionToInt.get("Decision");
+		this.brain.registerTransition("Hunt", "HuntFinished", (int) this.decisionToInt.get("HuntFinished"));
+		
+		if (this.brain.isHuntFinished() == true)	return this.decisionToInt.get("HuntFinished");
+		else	return this.decisionToInt.get("Decision");
 	}
 
 }

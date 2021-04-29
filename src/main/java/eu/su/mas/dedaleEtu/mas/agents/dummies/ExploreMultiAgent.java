@@ -369,6 +369,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		while(iter.hasNext()){
 			nodeId=iter.next().getLeft();
 			if (!this.getBrain().getClosedNodes().contains(nodeId)){
+				this.getBrain().resetExplorationTimeOut();
 				if (!this.getBrain().getOpenNodes().contains(nodeId)){
 					this.getBrain().addOpenNodes(nodeId);
 					map.addNode(nodeId, MapAttribute.open);

@@ -150,7 +150,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 					break;
 				}
 			}
-			this.brain.setHuntFinished(huntFinished);;
+			this.brain.setHuntFinished(huntFinished);
 		}
 	}
 
@@ -182,16 +182,9 @@ public class DecisionBehaviour extends OneShotBehaviour {
 				this.brain.addTimeSoughtMeeting(1);
 			}
 			
-		} else if (this.brain.isHuntFinished() == false) {
-			decision = "Patrol";
-			this.brain.updateGolemStench();
-			if (this.brain.getGolemStench().size() > 0)	{
-				decision = "Hunt";
-			}
-		}
-		else {
-			decision = "Sleep";
-			this.brain.getAgent().sayConsole("ZZZ");
+
+			
+		} else {
 			decision = "Patrol";
 			this.brain.updateGolemStench();
 			if (this.brain.getGolemStench().size() > 0)	{
