@@ -3,6 +3,7 @@ package customBehaviours;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.lang.Math;
@@ -72,15 +73,20 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			if (this.decision != null && this.decision.equals("Exploration") && (this.brain.getOpenNodes().size() == 0
 					|| this.brain.getClosedNodes().size() == this.brain.getMap().getNbNodes()))
 				this.brain.finishExploration();
-
-			// Check if an agent is not to be found
+			
+			
 			for (AgentKnowledge otherKnowledge : this.brain.getAgentsKnowledge().values()) {
-				if (otherKnowledge.getLastPosition() != null
-						&& otherKnowledge.getLastPosition().equals(this.brain.getAgent().getCurrentPosition())) {
-					otherKnowledge.setLastPosition(null);
-					this.brain.getAgent().sayConsole(otherKnowledge.getName() + " is not where it is supposed to be!");
-				}
+				if (otherKnowledge.getLastPosition() != null) {
+					// Check if an agent is not to be found
+					if (otherKnowledge.getLastPosition().equals(this.brain.getAgent().getCurrentPosition())) {
+						otherKnowledge.setLastPosition(null);
+						// Reset its stench
+						this.brain.replaceHuntersAndStench(otherKnowledge, new ArrayList<String>());
+						//this.brain.getAgent().sayConsole(otherKnowledge.getName() + " is not where it is supposed to be!");
+					}
+				}		
 			}
+			
 		} catch(Exception e) {
 			// The map wasn't ready
 			((ExploreMultiAgent)this.myAgent).sayConsole("My map wasn't ready to load");
@@ -94,7 +100,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		// Who wants to meet me?
 		this.whoWantsToMeet = new HashSet<String>();
 		for (String otherAgent: this.agentsAround) {
-			if (this.brain.getAgentsKnowledge().get(otherAgent).getMeetUtility() >= 1) {
+			if (this.brain.getAgentsKnowledge().get(otherAgent).getMeetUtility() >= 8) {
 				this.whoWantsToMeet.add(otherAgent);
 			}
 		}
@@ -110,9 +116,42 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		if (((ExploreMultiAgent)this.myAgent).isLoaded() && !this.brain.isExplorationFinished() && this.brain.getOpenNodes().size() == 0)	this.brain.finishExploration();
 		
 		// Check golem
-		this.brain.setGolemStench(((ExploreMultiAgent)this.myAgent).getStenchAround());
+		this.brain.updateGolemStench();
 		//	Reseting history if nothing detected
-		if (this.brain.getGolemStench().size() == 0)	this.brain.setHuntingHistory(new ArrayList<String>());
+		if (this.brain.getGolemStench().size() == 0) {
+			this.brain.setHuntingHistory(new ArrayList<String>());
+		}
+		// check that the golem has been blocked
+		else {
+			HashSet<String> hunters_pos = new HashSet<String>();
+			for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
+				if (otherKnowledge.getLastAction() != null && (otherKnowledge.getLastAction().equals("Hunt") || otherKnowledge.getLastAction().equals("HuntFinished"))){
+					hunters_pos.add(otherKnowledge.getLastPosition());
+				}
+			}
+			boolean huntFinished = true;
+			for (String pos : this.brain.getGolemStench()) {
+				if (!pos.equals(this.brain.getAgent().getCurrentPosition())) {
+					try {
+						//this.brain.getAgent().sayConsole(pos + " ?");
+						//this.brain.getAgent().sayConsole(this.brain.getMap().getSg().getEdges(pos) + " ?!");
+						
+						for (String other_pos : this.brain.getMap().getSg().getEdges(pos)) {
+							if (!hunters_pos.contains(other_pos) && !other_pos.equals(this.brain.getAgent().getCurrentPosition())) {
+								huntFinished = false;
+								break;
+							}
+						}
+					}catch (NullPointerException e) {
+						huntFinished = false;
+					}
+				}
+				if(!huntFinished) {
+					break;
+				}
+			}
+			this.brain.setHuntFinished(huntFinished);
+		}
 	}
 
 	// Takes a decision based on surroundings
@@ -145,8 +184,13 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			
 		} else {
 			decision = "Patrol";
+			this.brain.updateGolemStench();
 			if (this.brain.getGolemStench().size() > 0)	{
 				decision = "Hunt";
+			}
+			
+			if (this.brain.isHuntFinished() == true) {
+				decision = "HuntFinished";
 			}
 		}
 		

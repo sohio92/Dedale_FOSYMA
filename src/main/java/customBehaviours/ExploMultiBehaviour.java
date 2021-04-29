@@ -94,9 +94,11 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 			if (this.openNodes.isEmpty()){
 				this.brain.finishExploration();
 			}else{
-				//4) select next move.
+				//4) select next move
 				// If stuck, go to a node at random
-				if (this.brain.isStuck() == true) {
+				// Once in a while (10%), do a random move
+				boolean randomMove = new Random().nextInt(10) == 1;
+				if (this.brain.isStuck() == true || randomMove == true) {
 					List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this.myAgent).observe();
 					Collections.shuffle(lobs);
 					
@@ -104,7 +106,14 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 					nextPath.add(myPosition);
 					nextPath.add(this.nextNode);
 					
-					((ExploreMultiAgent)this.myAgent).sayConsole("I am stuck! Moving out of the way to " + this.nextNode);
+					if (this.brain.isStuck() == true)	{
+						if (((ExploreMultiAgent)this.myAgent).getStenchAround().size() > 0)	{
+							this.brain.addExplorationTimeOut(1);
+							((ExploreMultiAgent)this.myAgent).sayConsole("" + this.brain.getExplorationTimeOut());
+						}
+						//((ExploreMultiAgent)this.myAgent).sayConsole("I am stuck! Moving out of the way to " + this.nextNode);
+					}
+					//if (randomMove == true)	((ExploreMultiAgent)this.myAgent).sayConsole("I want to randomly move to " + this.nextNode);
 				}
 				
 				//4.1 If there exist one open node directly reachable, go for it,
@@ -126,6 +135,7 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 							} else if (pathProgress <= Math.floor(this.brain.getLastPath().size()/2)) {
 								// We want to do at least half of the previous path to make another decision
 								this.nextNode = this.brain.getLastPath().get(pathProgress + 1);
+								nextPath = this.brain.getLastPath();
 								willContinuePath = true;
 							}
 						}
@@ -155,11 +165,10 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 							this.nextNode = nextPath.get(0);
 						}	
 					}
-
 				}
 				
 				//((ExploreMultiAgent)this.myAgent).sayConsole("I want to go to " + this.nextNode + " I am following this path : " + nextPath);
-				if (willContinuePath == false)	this.brain.setLastPath(nextPath);
+				this.brain.setLastPath(nextPath);
 				((ExploreMultiAgent)this.myAgent).moveToIntention(this.nextNode, nextPath);
 			}
 		}		
@@ -173,6 +182,14 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 		this.brain.registerTransition("Decision", "Exploration", (int) this.decisionToInt.get("Exploration"));
 		this.brain.registerTransition("Exploration", "Decision", (int) this.decisionToInt.get("Decision"));
 		
-		return this.decisionToInt.get("Decision");
+		this.brain.registerTransition("Exploration", "HuntFinished", (int) this.decisionToInt.get("HuntFinished"));
+		
+		// If by chance, we stuck a golem
+		if (this.brain.isHuntFinished() && this.brain.getExplorationTimeOut() > 30)	{
+			this.brain.removeOpenNodes(this.nextNode);
+			this.brain.addClosedNodes(this.nextNode);
+			return this.decisionToInt.get("HuntFinished");
+		}
+		else	return this.decisionToInt.get("Decision");
 	}
 }

@@ -106,7 +106,7 @@ public class MapRepresentation implements Serializable {
 				if (mapAttribute.toString() == MapAttribute.closed.toString() || mapAttribute.toString() == MapAttribute.agent.toString()) {
 					n.clearAttributes();
 					n.setAttribute("ui.class", mapAttribute.toString());
-					this.sg.addNode(n.getId(), mapAttribute);
+					this.sg.addNode(id, mapAttribute);
 					n.setAttribute("ui.label",id);
 				}
 			}
@@ -335,7 +335,6 @@ public class MapRepresentation implements Serializable {
 
 		// Adding the missing nodes
 		Set<SerializableNode<String, MapAttribute>> otherNodes = otherSg.getAllNodes();
-
 
 		// Adding the missing edges
 		Integer nbEd = 0;

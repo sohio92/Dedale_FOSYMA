@@ -85,9 +85,6 @@ public class SeekMeetingBehaviour extends OneShotBehaviour {
 			// Check maybe can't get to any of them
 			
 			((ExploreMultiAgent)this.myAgent).discover();
-			
-			//Share my map to it
-
 			this.brain.setLastPath(this.pathToFollow);
 			if (this.pathToFollow.size() > 1)	((ExploreMultiAgent)this.myAgent).moveToIntention(this.pathToFollow.get(0), this.pathToFollow);
 		}

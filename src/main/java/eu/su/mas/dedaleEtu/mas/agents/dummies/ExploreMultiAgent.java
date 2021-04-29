@@ -70,7 +70,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	private boolean loaded = false;
 	
 	// What is my surrounding's range
-	private int maxRange = 4;
+	private int maxRange = 6;
 	
 	// Time to sleep between each step to see whats going on
 	private int timeSleep = 500;
@@ -82,6 +82,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	 *	 		2) add the behaviours
 	 *          
 	 */
+	
 	protected void setup(){
 
 		super.setup();
@@ -352,6 +353,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 		MapRepresentation map = this.getBrain().getMap();
 		
 		//1) remove the current node from openlist and add it to closedNodes.
+		if (this.getBrain().getOpenNodes().contains(myPosition))	this.getBrain().resetExplorationTimeOut();
 		this.getBrain().addClosedNodes(myPosition);
 		this.getBrain().removeOpenNodes(myPosition);
 		map.addNode(myPosition,MapAttribute.closed);
@@ -396,11 +398,10 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	}
 	
 	// Returns what we smell
-	public HashSet<String> getStenchAround(){
+	public List<String> getStenchAround(){
 		List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this).observe();
-		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
 		
-		HashSet<String> golemStench = new HashSet<String>();
+		List<String> golemStench = new ArrayList<String>();
 		//while (iter.hasNext()) {
 			//Couple<String,List<Couple<Observation,Integer>>> nodeObserved = iter.next();
 		for (Couple<String,List<Couple<Observation,Integer>>> nodeObserved : lobs) {		

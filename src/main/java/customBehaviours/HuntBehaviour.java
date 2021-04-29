@@ -2,8 +2,10 @@ package customBehaviours;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -62,41 +64,58 @@ public class HuntBehaviour extends OneShotBehaviour{
 		}
 		
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
-		
-		// Who is currently hunting with me?
-		HashSet<String> hunters = new HashSet<String>();
-		for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
-			if (otherKnowledge.getLastAction().equals("Hunt"))	hunters.add(otherKnowledge.getName());
-		}
-
+		Hashtable<AgentKnowledge, List<String>> huntersAndStench = this.brain.getHuntersAndStench();
 
 		// Retrieving the detected stench
-		HashSet<String> golemStench = this.brain.getGolemStench();
+		List<String> golemStench = new ArrayList<String>(this.brain.getGolemStench());
 		List<String> huntingHistory = this.brain.getHuntingHistory();
+		
+		// on laisse celui qui a moins de choix prendre une place
+		// si egalité lordre lexico fait la diff
+		huntersAndStench.forEach((hunter, detectedStench) -> {
+			if (detectedStench.size() < golemStench.size() ||
+					(detectedStench.size() == golemStench.size() && this.myAgent.getName().compareTo(hunter.getName()) == -1)) {
+				//this.brain.getAgent().sayConsole("je laisse la place a " + hunter.getName());
+				golemStench.removeAll(detectedStench);
+			}
+		});
+		
 		
 		// Updating history
 		this.brain.addHuntingHistory(myPosition);
 		
-		// Randomly choosing which stench to go
+		// Choosing which stench, depending on its distance to other hunters
 		String nextNode = null;
+		Collections.shuffle(golemStench);
 		for (String otherNode: golemStench) {
 			if (otherNode.equals(myPosition))	continue;
 			if (huntingHistory.contains(otherNode))	continue;
+			
 			nextNode = otherNode;
 			break;
 		}
 		
 		// If we couldn't find any node, we have to check in the history
 		if (nextNode == null) {
-			nextNode = huntingHistory.get(-1);
+			for (String otherNode: golemStench) {
+				if (otherNode.equals(myPosition))	continue;
+				if (huntingHistory.contains(otherNode))	{
+					nextNode = otherNode;
+					break;
+				}
+			}
+			//nextNode = huntingHistory.get(huntingHistory.size()-1);
 		}
 		
 		// Doing this in case observation range greater than one
-		List<String> nextPath = this.brain.getMap().getShortestPath(myPosition, nextNode);
-		nextNode = nextPath.get(0);	
-		
-		this.brain.setLastPath(nextPath);
-		((ExploreMultiAgent)this.myAgent).moveToIntention(nextNode, nextPath);
+		if (nextNode != null) { //if one possibility is good 
+			List<String> nextPath = this.brain.getMap().getShortestPath(myPosition, nextNode);
+			if (nextPath.size() > 0) {
+				nextNode = nextPath.get(0);	
+				this.brain.setLastPath(nextPath);
+				((ExploreMultiAgent)this.myAgent).moveToIntention(nextNode, nextPath);
+			}
+		}
 	}
 
 
@@ -126,7 +145,10 @@ public class HuntBehaviour extends OneShotBehaviour{
 		this.brain.registerTransition("Decision", "Hunt", (int) this.decisionToInt.get("Hunt"));
 		this.brain.registerTransition("Hunt", "Decision", (int) this.decisionToInt.get("Decision"));
 		
-		return this.decisionToInt.get("Decision");
+		this.brain.registerTransition("Hunt", "HuntFinished", (int) this.decisionToInt.get("HuntFinished"));
+		
+		if (this.brain.isHuntFinished() == true)	return this.decisionToInt.get("HuntFinished");
+		else	return this.decisionToInt.get("Decision");
 	}
 
 }

@@ -3,6 +3,7 @@ package customBehaviours;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 
@@ -36,11 +37,15 @@ public class BrainBehaviour extends FSMBehaviour {
 	private boolean isStuck = false;
 	private int timeStuck = 0;
 	
+	private int explorationTimeOut = 0;
 	private boolean explorationFinished = false;
-	private List<String> huntingHistory;
+	private boolean huntFinished = false;
+	private List<String> huntingHistory = new ArrayList<String>();
 	
 	// Stench detected
-	private HashSet<String> golemStench;
+	private List<String> golemStench;
+	private Hashtable<AgentKnowledge, List<String>> huntersAndStench = new Hashtable<AgentKnowledge, List<String>>();
+	private String lastStenchDetected;
 	
 	// The agents I'm interested in
 	private ArrayList<AgentKnowledge> interestingAgents;
@@ -48,6 +53,8 @@ public class BrainBehaviour extends FSMBehaviour {
 	// SeekMeetingTimeOut
 	private int timeSoughtMeeting = 0;
 	private int waitOutMeeting = 5;
+
+	
 	
 	public BrainBehaviour (Agent myAgent, HashSet<String> agentNames) {
 		this.myAgent = myAgent;
@@ -62,6 +69,7 @@ public class BrainBehaviour extends FSMBehaviour {
 		this.decisionToInt.put("SeekMeeting", 2);
 		this.decisionToInt.put("Patrol", 3);
 		this.decisionToInt.put("Hunt", 4);
+		this.decisionToInt.put("HuntFinished", 5); //do nothing
 	}
 	
 	public void onStart() {
@@ -91,6 +99,14 @@ public class BrainBehaviour extends FSMBehaviour {
 		
 		this.registerTransition("Decision", "Hunt", (int) this.decisionToInt.get("Hunt"));
 		this.registerTransition("Hunt", "Decision", (int) this.decisionToInt.get("Decision"));
+	
+		this.registerState(new HuntFinishedBehaviour(this), "HuntFinished");
+		
+		this.registerTransition("Hunt", "HuntFinished", (int) this.decisionToInt.get("HuntFinished"));
+		this.registerTransition("Exploration", "HuntFinished", (int) this.decisionToInt.get("HuntFinished"));
+		
+		this.registerTransition("Decision", "HuntFinished", (int) this.decisionToInt.get("HuntFinished"));
+		this.registerTransition("HuntFinished", "Decision", (int) this.decisionToInt.get("Decision"));
 		
 	}
 	
@@ -241,9 +257,17 @@ public class BrainBehaviour extends FSMBehaviour {
 	public boolean isExplorationFinished() {
 		return explorationFinished;
 	}
+	
+	public boolean isHuntFinished() {
+		return huntFinished;
+	}
 
 	public void setExplorationFinished(boolean explorationFinished) {
 		this.explorationFinished = explorationFinished;
+	}
+	
+	public void setHuntFinished(boolean huntFinished) {
+		this.huntFinished = huntFinished;
 	}
 
 	public List<String> getHuntingHistory() {
@@ -258,12 +282,16 @@ public class BrainBehaviour extends FSMBehaviour {
 		this.huntingHistory.add(newNode);
 	}
 
-	public HashSet<String> getGolemStench() {
-		//return golemStench;
-		return ((ExploreMultiAgent)this.myAgent).getStenchAround();
+	public List<String> getGolemStench() {
+		return golemStench;
+	}
+	
+	public void updateGolemStench() {
+		this.golemStench = ((ExploreMultiAgent)this.myAgent).getStenchAround();
+		if (this.golemStench.size() > 0)	this.setLastStenchDetected(this.golemStench.get(0));
 	}
 
-	public void setGolemStench(HashSet<String> golemStench) {
+	public void setGolemStench(List<String> golemStench) {
 		this.golemStench = golemStench;
 	}
 
@@ -290,4 +318,38 @@ public class BrainBehaviour extends FSMBehaviour {
 	public void addWaitOutMeeting(int moreMeeting) {
 		this.waitOutMeeting += moreMeeting;
 	}
+
+	public Hashtable<AgentKnowledge, List<String>> getHuntersAndStench() {
+		return huntersAndStench;
+	}
+
+	public void setHuntersAndStench(Hashtable<AgentKnowledge, List<String>> huntersAndStench) {
+		this.huntersAndStench = huntersAndStench;
+	}
+	
+	public void replaceHuntersAndStench(AgentKnowledge hunter, List<String> stench) {
+		this.huntersAndStench.put(hunter, stench);
+		hunter.setDetectedStench(stench);
+	}
+
+	public String getLastStenchDetected() {
+		return lastStenchDetected;
+	}
+
+	public void setLastStenchDetected(String lastStenchDetected) {
+		this.lastStenchDetected = lastStenchDetected;
+	}
+
+	public int getExplorationTimeOut() {
+		return explorationTimeOut;
+	}
+
+	public void addExplorationTimeOut(int newTimeOut) {
+		this.explorationTimeOut += newTimeOut;
+	}
+	
+	public void resetExplorationTimeOut() {
+		this.explorationTimeOut = 0;
+	}
+	
 }

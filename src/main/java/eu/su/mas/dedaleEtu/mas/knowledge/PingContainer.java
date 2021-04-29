@@ -23,17 +23,28 @@ public class PingContainer implements Serializable {
 	private String lastAction;
 	
 	// Do I want to meet you?
-	private double meetUtility;
+	private double meetUtility;	
 	
 	// where is the golem ?
 	// null if I don't know
 	// == "position" of golem if I know where it is
+	private List<String> detectedStench;
 	
 	public PingContainer(ExploreMultiAgent myAgent, String otherAgent) {
 		this.setLastPosition(myAgent.getCurrentPosition());
 		
+		this.setDetectedStench(myAgent.getStenchAround());
+		
 		this.setLastAction(myAgent.getBrain().getLastDecision());
 		this.setMeetUtility(myAgent.getBrain().getAgentsKnowledge().get(otherAgent).getMeetUtility());
+	}
+
+	private void setDetectedStench(List<String> stenchAround) {
+		this.detectedStench = stenchAround;
+	}
+	
+	public List<String> getDetectedStench() {
+		return detectedStench;
 	}
 
 	public String getLastPosition() {
