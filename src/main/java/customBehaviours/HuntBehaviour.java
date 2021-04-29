@@ -64,16 +64,7 @@ public class HuntBehaviour extends OneShotBehaviour{
 		}
 		
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
-		
-		// Who is currently hunting with me and what its possibilities of action are ?
-		//HashSet<String> hunters = new HashSet<String>();
-		Hashtable<String, List<String>> hunters_possibility = new Hashtable<String, List<String>>();
-		for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
-			if (otherKnowledge.getLastAction() != null && otherKnowledge.getLastAction().equals("Hunt")){
-				//hunters.add(otherKnowledge.getName());
-				hunters_possibility.put(otherKnowledge.getName(), otherKnowledge.getPossibility());
-			}
-		}
+		Hashtable<AgentKnowledge, List<String>> huntersAndStench = this.brain.getHuntersAndStench();
 
 		// Retrieving the detected stench
 		List<String> golemStench = new ArrayList<String>(this.brain.getGolemStench());
@@ -81,11 +72,11 @@ public class HuntBehaviour extends OneShotBehaviour{
 		
 		// on laisse celui qui a moins de choix prendre une place
 		// si egalité lordre lexico fait la diff
-		hunters_possibility.forEach((hunter, possibility) -> {
-			if (possibility.size() < golemStench.size() ||
-					(possibility.size() == golemStench.size() && this.myAgent.getName().compareTo(hunter) == -1)) {
-				this.brain.getAgent().sayConsole("je laisse la place a " + hunter);
-				golemStench.removeAll(possibility);
+		huntersAndStench.forEach((hunter, detectedStench) -> {
+			if (detectedStench.size() < golemStench.size() ||
+					(detectedStench.size() == golemStench.size() && this.myAgent.getName().compareTo(hunter.getName()) == -1)) {
+				//this.brain.getAgent().sayConsole("je laisse la place a " + hunter.getName());
+				golemStench.removeAll(detectedStench);
 			}
 		});
 		

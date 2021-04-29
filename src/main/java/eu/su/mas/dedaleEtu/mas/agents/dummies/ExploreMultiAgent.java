@@ -82,6 +82,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	 *	 		2) add the behaviours
 	 *          
 	 */
+	
 	protected void setup(){
 
 		super.setup();

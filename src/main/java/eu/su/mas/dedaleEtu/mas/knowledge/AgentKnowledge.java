@@ -32,7 +32,7 @@ public class AgentKnowledge implements Serializable{
 	private List<String> pathToAgent;
 	
 	private double meetUtility = 0; // How much do you want to meet me ?
-	private List<String> possibility;
+	private List<String> detectedStench;
 	
 	public AgentKnowledge(String name) {
 		this.name = name;
@@ -52,10 +52,11 @@ public class AgentKnowledge implements Serializable{
 				PingContainer content = (PingContainer) newMessage.getContentObject();
 				
 				if (recentMessage == true) {
-					this.lastAction = content.getLastAction();
-					this.lastPosition = content.getLastPosition();
-					this.meetUtility = content.getMeetUtility();
-					this.possibility = content.getPossibility();
+					this.setLastAction(content.getLastAction());
+					this.setLastPosition(content.getLastPosition());
+					this.setMeetUtility(content.getMeetUtility());
+					this.setDetectedStench(content.getDetectedStench());
+					otherBrain.replaceHuntersAndStench(this, this.detectedStench);
 				}
 				
 				if (!this.map.hasNode(lastPosition)) {
@@ -114,8 +115,12 @@ public class AgentKnowledge implements Serializable{
 	/*
 	 * Getters and setters
 	 */
-	public List<String> getPossibility() {
-		return possibility;
+	public List<String> getDetectedStench() {
+		return detectedStench;
+	}
+	
+	public void setDetectedStench(List<String> newStench) {
+		this.detectedStench = newStench;
 	}
 	
 	public String getName() {

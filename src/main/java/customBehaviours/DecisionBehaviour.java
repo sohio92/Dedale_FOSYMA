@@ -3,6 +3,7 @@ package customBehaviours;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.lang.Math;
@@ -72,15 +73,20 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			if (this.decision != null && this.decision.equals("Exploration") && (this.brain.getOpenNodes().size() == 0
 					|| this.brain.getClosedNodes().size() == this.brain.getMap().getNbNodes()))
 				this.brain.finishExploration();
-
-			// Check if an agent is not to be found
+			
+			
 			for (AgentKnowledge otherKnowledge : this.brain.getAgentsKnowledge().values()) {
-				if (otherKnowledge.getLastPosition() != null
-						&& otherKnowledge.getLastPosition().equals(this.brain.getAgent().getCurrentPosition())) {
-					otherKnowledge.setLastPosition(null);
-					this.brain.getAgent().sayConsole(otherKnowledge.getName() + " is not where it is supposed to be!");
-				}
+				if (otherKnowledge.getLastPosition() != null) {
+					// Check if an agent is not to be found
+					if (otherKnowledge.getLastPosition().equals(this.brain.getAgent().getCurrentPosition())) {
+						otherKnowledge.setLastPosition(null);
+						// Reset its stench
+						this.brain.replaceHuntersAndStench(otherKnowledge, new ArrayList<String>());
+						this.brain.getAgent().sayConsole(otherKnowledge.getName() + " is not where it is supposed to be!");
+					}
+				}		
 			}
+			
 		} catch(Exception e) {
 			// The map wasn't ready
 			((ExploreMultiAgent)this.myAgent).sayConsole("My map wasn't ready to load");

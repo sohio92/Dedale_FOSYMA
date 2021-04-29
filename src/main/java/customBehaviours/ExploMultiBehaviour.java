@@ -129,6 +129,7 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 							} else if (pathProgress <= Math.floor(this.brain.getLastPath().size()/2)) {
 								// We want to do at least half of the previous path to make another decision
 								this.nextNode = this.brain.getLastPath().get(pathProgress + 1);
+								nextPath = this.brain.getLastPath();
 								willContinuePath = true;
 							}
 						}
@@ -161,7 +162,7 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 				}
 				
 				//((ExploreMultiAgent)this.myAgent).sayConsole("I want to go to " + this.nextNode + " I am following this path : " + nextPath);
-				if (willContinuePath == false)	this.brain.setLastPath(nextPath);
+				this.brain.setLastPath(nextPath);
 				((ExploreMultiAgent)this.myAgent).moveToIntention(this.nextNode, nextPath);
 			}
 		}		

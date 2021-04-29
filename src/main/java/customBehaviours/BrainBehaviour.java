@@ -3,6 +3,7 @@ package customBehaviours;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 
@@ -42,6 +43,7 @@ public class BrainBehaviour extends FSMBehaviour {
 	
 	// Stench detected
 	private List<String> golemStench;
+	private Hashtable<AgentKnowledge, List<String>> huntersAndStench = new Hashtable<AgentKnowledge, List<String>>();
 	
 	// The agents I'm interested in
 	private ArrayList<AgentKnowledge> interestingAgents;
@@ -305,4 +307,18 @@ public class BrainBehaviour extends FSMBehaviour {
 	public void addWaitOutMeeting(int moreMeeting) {
 		this.waitOutMeeting += moreMeeting;
 	}
+
+	public Hashtable<AgentKnowledge, List<String>> getHuntersAndStench() {
+		return huntersAndStench;
+	}
+
+	public void setHuntersAndStench(Hashtable<AgentKnowledge, List<String>> huntersAndStench) {
+		this.huntersAndStench = huntersAndStench;
+	}
+	
+	public void replaceHuntersAndStench(AgentKnowledge hunter, List<String> stench) {
+		this.huntersAndStench.put(hunter, stench);
+		hunter.setDetectedStench(stench);
+	}
+	
 }
