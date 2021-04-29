@@ -82,7 +82,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 						otherKnowledge.setLastPosition(null);
 						// Reset its stench
 						this.brain.replaceHuntersAndStench(otherKnowledge, new ArrayList<String>());
-						this.brain.getAgent().sayConsole(otherKnowledge.getName() + " is not where it is supposed to be!");
+						//this.brain.getAgent().sayConsole(otherKnowledge.getName() + " is not where it is supposed to be!");
 					}
 				}		
 			}
@@ -100,7 +100,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		// Who wants to meet me?
 		this.whoWantsToMeet = new HashSet<String>();
 		for (String otherAgent: this.agentsAround) {
-			if (this.brain.getAgentsKnowledge().get(otherAgent).getMeetUtility() >= 1) {
+			if (this.brain.getAgentsKnowledge().get(otherAgent).getMeetUtility() >= 8) {
 				this.whoWantsToMeet.add(otherAgent);
 			}
 		}

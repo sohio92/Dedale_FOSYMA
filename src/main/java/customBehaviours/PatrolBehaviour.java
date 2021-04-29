@@ -102,6 +102,21 @@ public class PatrolBehaviour extends OneShotBehaviour {
 					Collections.sort(pathsToAgents, Comparator.comparing(a -> a.size()));
 					nextPath = pathsToAgents.get(0);
 					this.nextNode = nextPath.get(0);
+					
+					String stenchLocation = nextPath.get(nextPath.size() - 1);
+					
+					this.brain.setLastStenchDetected(stenchLocation);
+					((ExploreMultiAgent)this.myAgent).sayConsole("A stench was found ! Heading to " + stenchLocation);
+				} else if (this.brain.getLastStenchDetected() != null) {
+					
+					nextPath = this.myMap.getShortestPath(myPosition, this.brain.getLastStenchDetected());
+					
+					if (nextPath.size() == 0) {
+						this.brain.setLastStenchDetected(null);
+					} else {
+						this.nextNode = nextPath.get(0);
+						((ExploreMultiAgent)this.myAgent).sayConsole("I remember the golem was in " + this.brain.getLastStenchDetected() + " last time !");
+					}
 				} else {
 					// Continue a bit on the previous chosen path
 					if (this.brain.getLastPath() != null) {

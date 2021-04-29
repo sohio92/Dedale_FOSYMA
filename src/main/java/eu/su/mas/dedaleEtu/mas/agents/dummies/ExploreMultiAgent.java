@@ -399,7 +399,6 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	// Returns what we smell
 	public List<String> getStenchAround(){
 		List<Couple<String,List<Couple<Observation,Integer>>>> lobs=((AbstractDedaleAgent)this).observe();
-		Iterator<Couple<String, List<Couple<Observation, Integer>>>> iter=lobs.iterator();
 		
 		List<String> golemStench = new ArrayList<String>();
 		//while (iter.hasNext()) {

@@ -84,11 +84,11 @@ public class ShareMapBehaviour extends OneShotBehaviour {
 
 				// Retrieve what the other agent is missing
 				MapRepresentation otherMap = otherKnowledge.getMap();
-				//SerializableSimpleGraph<String, MapAttribute> missingSg = otherMap.getMissingFromMap(this.myMap);
+				SerializableSimpleGraph<String, MapAttribute> missingSg = otherMap.getMissingFromMap(this.myMap);
 
 				try {
-					//msg.setContentObject(missingSg);
-					msg.setContentObject(((ExploreMultiAgent) this.myAgent).getBrain().getMap().getSg());
+					msg.setContentObject(missingSg);
+					//msg.setContentObject(((ExploreMultiAgent) this.myAgent).getBrain().getMap().getSg());
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();

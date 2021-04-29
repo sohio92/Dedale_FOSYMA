@@ -107,7 +107,7 @@ public class ExploMultiBehaviour extends OneShotBehaviour {
 					nextPath.add(this.nextNode);
 					
 					if (this.brain.isStuck() == true)	((ExploreMultiAgent)this.myAgent).sayConsole("I am stuck! Moving out of the way to " + this.nextNode);
-					if (randomMove == true)	((ExploreMultiAgent)this.myAgent).sayConsole("I want to randomly move to " + this.nextNode);
+					//if (randomMove == true)	((ExploreMultiAgent)this.myAgent).sayConsole("I want to randomly move to " + this.nextNode);
 				}
 				
 				//4.1 If there exist one open node directly reachable, go for it,

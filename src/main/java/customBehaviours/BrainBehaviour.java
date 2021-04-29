@@ -44,6 +44,7 @@ public class BrainBehaviour extends FSMBehaviour {
 	// Stench detected
 	private List<String> golemStench;
 	private Hashtable<AgentKnowledge, List<String>> huntersAndStench = new Hashtable<AgentKnowledge, List<String>>();
+	private String lastStenchDetected;
 	
 	// The agents I'm interested in
 	private ArrayList<AgentKnowledge> interestingAgents;
@@ -278,6 +279,7 @@ public class BrainBehaviour extends FSMBehaviour {
 	
 	public void updateGolemStench() {
 		this.golemStench = ((ExploreMultiAgent)this.myAgent).getStenchAround();
+		if (this.golemStench.size() > 0)	this.setLastStenchDetected(this.golemStench.get(0));
 	}
 
 	public void setGolemStench(List<String> golemStench) {
@@ -319,6 +321,14 @@ public class BrainBehaviour extends FSMBehaviour {
 	public void replaceHuntersAndStench(AgentKnowledge hunter, List<String> stench) {
 		this.huntersAndStench.put(hunter, stench);
 		hunter.setDetectedStench(stench);
+	}
+
+	public String getLastStenchDetected() {
+		return lastStenchDetected;
+	}
+
+	public void setLastStenchDetected(String lastStenchDetected) {
+		this.lastStenchDetected = lastStenchDetected;
 	}
 	
 }
