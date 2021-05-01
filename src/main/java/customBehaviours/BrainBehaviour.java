@@ -9,7 +9,11 @@ import java.util.List;
 
 import org.graphstream.graph.Node;
 
+import dataStructures.serializableGraph.SerializableNode;
 import dataStructures.serializableGraph.SerializableSimpleGraph;
+import dataStructures.tuple.Couple;
+import eu.su.mas.dedale.env.Observation;
+import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreMultiAgent;
 import eu.su.mas.dedaleEtu.mas.knowledge.AgentKnowledge;
 import eu.su.mas.dedaleEtu.mas.knowledge.MapRepresentation;
@@ -286,7 +290,30 @@ public class BrainBehaviour extends FSMBehaviour {
 		return golemStench;
 	}
 	
-	public void updateGolemStench() {
+	public void deleteStench(String node) {
+		if (node.equals(this.getLastStenchDetected())) {
+			this.setLastStenchDetected(null);
+		}
+		
+		for (AgentKnowledge otherKnowledge: this.getAgentsKnowledge().values()) {
+			if (otherKnowledge.getDetectedStench() != null)	otherKnowledge.removeDetectedStench(node);
+		}
+		
+		for (AgentKnowledge otherHunter: this.getHuntersAndStench().keySet()) {
+			List<String> stench = this.getHuntersAndStench().get(otherHunter);
+			stench.remove(node);
+			this.replaceHuntersAndStench(otherHunter, stench);
+		}
+	}
+	public void updateGolemStench() {		
+		SerializableSimpleGraph <String, MapAttribute> sg = this.getMap().getSg();
+		String myPosition = ((AbstractDedaleAgent)this.getAgent()).getCurrentPosition();
+		
+		this.deleteStench(myPosition);
+		for (String node: sg.getEdges(myPosition)) {
+			this.deleteStench(node);
+		}
+		
 		this.golemStench = ((ExploreMultiAgent)this.myAgent).getStenchAround();
 		if (this.golemStench.size() > 0)	this.setLastStenchDetected(this.golemStench.get(0));
 	}
