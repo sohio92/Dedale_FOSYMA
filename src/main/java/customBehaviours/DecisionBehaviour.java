@@ -87,6 +87,44 @@ public class DecisionBehaviour extends OneShotBehaviour {
 				}		
 			}
 			
+			// Check golem
+			this.brain.updateGolemStench();
+			//	Reseting history if nothing detected
+			if (this.brain.getGolemStench().size() == 0) {
+				this.brain.setHuntingHistory(new ArrayList<String>());
+			}
+			// check that the golem has been blocked
+			else {
+				HashSet<String> hunters_pos = new HashSet<String>();
+				for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
+					if (otherKnowledge.getLastAction() != null && (otherKnowledge.getLastAction().equals("Hunt") || otherKnowledge.getLastAction().equals("HuntFinished"))){
+						hunters_pos.add(otherKnowledge.getLastPosition());
+					}
+				}
+				boolean huntFinished = true;
+				for (String pos : this.brain.getGolemStench()) {
+					if (!pos.equals(this.brain.getAgent().getCurrentPosition())) {
+						try {
+							//this.brain.getAgent().sayConsole(pos + " ?");
+							//this.brain.getAgent().sayConsole(this.brain.getMap().getSg().getEdges(pos) + " ?!");
+							
+							for (String other_pos : this.brain.getMap().getSg().getEdges(pos)) {
+								if (!hunters_pos.contains(other_pos) && !other_pos.equals(this.brain.getAgent().getCurrentPosition())) {
+									huntFinished = false;
+									break;
+								}
+							}
+						}catch (NullPointerException e) {
+							huntFinished = false;
+						}
+					}
+					if(!huntFinished) {
+						break;
+					}
+				}
+				this.brain.setHuntFinished(huntFinished);
+			}
+			
 		} catch(Exception e) {
 			// The map wasn't ready
 			((ExploreMultiAgent)this.myAgent).sayConsole("My map wasn't ready to load");
@@ -115,43 +153,6 @@ public class DecisionBehaviour extends OneShotBehaviour {
 		// Have we finished the exploration?
 		if (((ExploreMultiAgent)this.myAgent).isLoaded() && !this.brain.isExplorationFinished() && this.brain.getOpenNodes().size() == 0)	this.brain.finishExploration();
 		
-		// Check golem
-		this.brain.updateGolemStench();
-		//	Reseting history if nothing detected
-		if (this.brain.getGolemStench().size() == 0) {
-			this.brain.setHuntingHistory(new ArrayList<String>());
-		}
-		// check that the golem has been blocked
-		else {
-			HashSet<String> hunters_pos = new HashSet<String>();
-			for (AgentKnowledge otherKnowledge: this.brain.getAgentsKnowledge().values()) {
-				if (otherKnowledge.getLastAction() != null && (otherKnowledge.getLastAction().equals("Hunt") || otherKnowledge.getLastAction().equals("HuntFinished"))){
-					hunters_pos.add(otherKnowledge.getLastPosition());
-				}
-			}
-			boolean huntFinished = true;
-			for (String pos : this.brain.getGolemStench()) {
-				if (!pos.equals(this.brain.getAgent().getCurrentPosition())) {
-					try {
-						//this.brain.getAgent().sayConsole(pos + " ?");
-						//this.brain.getAgent().sayConsole(this.brain.getMap().getSg().getEdges(pos) + " ?!");
-						
-						for (String other_pos : this.brain.getMap().getSg().getEdges(pos)) {
-							if (!hunters_pos.contains(other_pos) && !other_pos.equals(this.brain.getAgent().getCurrentPosition())) {
-								huntFinished = false;
-								break;
-							}
-						}
-					}catch (NullPointerException e) {
-						huntFinished = false;
-					}
-				}
-				if(!huntFinished) {
-					break;
-				}
-			}
-			this.brain.setHuntFinished(huntFinished);
-		}
 	}
 
 	// Takes a decision based on surroundings
@@ -182,7 +183,7 @@ public class DecisionBehaviour extends OneShotBehaviour {
 				this.brain.addTimeSoughtMeeting(1);
 			}
 			
-		} else {
+		} else if (this.brain.isHuntFinished() == false) {
 			decision = "Patrol";
 			this.brain.updateGolemStench();
 			if (this.brain.getGolemStench().size() > 0)	{
@@ -192,6 +193,9 @@ public class DecisionBehaviour extends OneShotBehaviour {
 			if (this.brain.isHuntFinished() == true) {
 				decision = "HuntFinished";
 			}
+		}
+		else {
+			decision = "HuntFinished";
 		}
 		
 		// Maybe send them more to the most interested agents?

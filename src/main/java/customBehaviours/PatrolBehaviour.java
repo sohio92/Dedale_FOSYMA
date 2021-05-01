@@ -74,7 +74,7 @@ public class PatrolBehaviour extends OneShotBehaviour {
 			List<String> nextPath = new ArrayList<String>();
 
 			this.myMap = this.brain.getMap();
-			this.g = this.myMap.getGraph();		
+			this.g = this.myMap.getGraph();
 			
 			// Seek the closest friends to share my map!
 			int lowestSize = Integer.MAX_VALUE;
@@ -134,12 +134,16 @@ public class PatrolBehaviour extends OneShotBehaviour {
 			
 			// Otherwise and if stuck or by chance, randomly wander
 			boolean randomMove = new Random().nextInt(20) == 1;
-			if (nextPath.size() == 0 || randomMove == true) {
+			if (this.brain.isStuck() == true || randomMove == true) {
 				List<Couple<String,List<Couple<Observation,Integer>>>> lobs = ((AbstractDedaleAgent)this.myAgent).observe();
 				Collections.shuffle(lobs);			
 				this.nextNode = lobs.get(0).getLeft();
+				
+				nextPath = new ArrayList<String>();
 				nextPath.add(myPosition);
 				nextPath.add(this.nextNode);
+				
+				//((ExploreMultiAgent)this.myAgent).sayConsole("Randomy moving to " + this.nextNode);
 			}
 			
 

@@ -28,6 +28,7 @@ public class PingPositionBehaviour extends CyclicBehaviour{
 
 	@Override
 	public void action() {
+		
 		String myPosition=((AbstractDedaleAgent)this.myAgent).getCurrentPosition();
 
 		//A message is defined by : a performative, a sender, a set of receivers, (a protocol),(a content (and/or contentOBject))

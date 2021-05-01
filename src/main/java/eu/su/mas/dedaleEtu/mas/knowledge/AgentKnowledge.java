@@ -45,17 +45,25 @@ public class AgentKnowledge implements Serializable{
 	
 	public boolean unpackMessage(BrainBehaviour otherBrain, ACLMessage newMessage) {
 		boolean recentMessage = newMessage.getPostTimeStamp() >= this.mostRecentPing;
-		
 		if (newMessage.getProtocol().equals("PingProtocol")) {
 			
 			try {
 				PingContainer content = (PingContainer) newMessage.getContentObject();
 				
 				if (recentMessage == true) {
+					this.setMostRecentPing(newMessage.getPostTimeStamp());
+					
 					this.setLastAction(content.getLastAction());
 					this.setLastPosition(content.getLastPosition());
 					this.setMeetUtility(content.getMeetUtility());
-					this.setDetectedStench(content.getDetectedStench());
+					
+					List<String> receivedStench = content.getDetectedStench();
+					for (AgentKnowledge otherKnowledge: otherBrain.getAgentsKnowledge().values()) {
+						if (otherKnowledge.getName() != this.getName() && otherKnowledge.getMostRecentPing() >= this.getMostRecentPing()) {
+							receivedStench.remove(otherKnowledge.getLastPosition());
+						}
+					}
+					this.setDetectedStench(receivedStench);
 					otherBrain.replaceHuntersAndStench(this, this.detectedStench);
 				}
 				
@@ -79,8 +87,7 @@ public class AgentKnowledge implements Serializable{
 		this.getMap().fuseMap(newSg);
 		this.getMap().updateIgnorance(otherBrain.getMap());
 	}
-	
-	
+
 	// Adds a new last known path
 	public void addNewPath(List<String> newPath) {
 		this.map.updateWithPath(newPath);
@@ -121,6 +128,10 @@ public class AgentKnowledge implements Serializable{
 	
 	public void setDetectedStench(List<String> newStench) {
 		this.detectedStench = newStench;
+	}
+	
+	public void removeDetectedStench(String stench) {
+		this.detectedStench.remove(stench);
 	}
 	
 	public String getName() {
