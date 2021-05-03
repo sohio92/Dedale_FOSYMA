@@ -73,7 +73,7 @@ public class ExploreMultiAgent extends AbstractDedaleAgent {
 	private int maxRange = 6;
 	
 	// Time to sleep between each step to see whats going on
-	private int timeSleep = 500;
+	private int timeSleep = 1000;
 	
 	/**
 	 * This method is automatically called when "agent".start() is executed.

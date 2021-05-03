@@ -60,8 +60,8 @@ public final class ConfigurationFile {
 	/**
 	 * Not null when the environment is loaded; should be null if the environment is generated or already online
 	 */
-	public static String INSTANCE_TOPOLOGY="resources/map2021-topologyExam1-tree.dgs";//pour l'arbre
-	//public static String INSTANCE_TOPOLOGY="resources/map2021-topologyExam1-graph.dgs";//pour le graphe
+	//public static String INSTANCE_TOPOLOGY="resources/map2021-topologyExam1-tree.dgs";//pour l'arbre
+	public static String INSTANCE_TOPOLOGY="resources/map2021-topologyExam1-graph.dgs";//pour le graphe
 	
 	//public static String INSTANCE_TOPOLOGY=null;
 	
@@ -83,9 +83,9 @@ public final class ConfigurationFile {
 	
 	// If the environment is loaded but you do not want to define elements on the map
 	
-	
+	public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/distributedExploration/emptyMap";
 	//public static String INSTANCE_CONFIGURATION_ELEMENTS=null;
-	public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/treasureHunt/map2019-elementsExam1";
+	//public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/treasureHunt/map2019-elementsExam1";
 	//public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/treasureHunt/Houat-elements";
 	//public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/treasureHunt/map2018-elements-ica";
 	//public static String INSTANCE_CONFIGURATION_ELEMENTS="resources/interlocking/mapInterlocking1-elements";
@@ -97,8 +97,8 @@ public final class ConfigurationFile {
 	/**
 	 * Must'nt be null as it describes the native agents' capabilities 
 	 */
-	public static String INSTANCE_CONFIGURATION_ENTITIES="resources/map2021-entitiesTree";//pour l'arbre
-	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/map2021-entitiesGraph";//pour le graphe
+	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/map2021-entitiesTree";//pour l'arbre
+	public static String INSTANCE_CONFIGURATION_ENTITIES="resources/map2021-entitiesGraph";//pour le graphe
 	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/agentExplo";
 	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/agentExplo-2";
 	//public static String INSTANCE_CONFIGURATION_ENTITIES="resources/hunt/map2020-entitiesTree";
