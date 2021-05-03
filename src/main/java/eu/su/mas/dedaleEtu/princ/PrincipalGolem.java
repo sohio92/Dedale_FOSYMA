@@ -2,6 +2,7 @@ package eu.su.mas.dedaleEtu.princ;
 
 import java.util.ArrayList;
 
+
 import java.util.HashMap;
 import java.util.List;
 
@@ -12,6 +13,7 @@ import eu.su.mas.dedaleEtu.mas.agents.dummies.ExploreSoloAgent;
 import eu.su.mas.dedale.mas.AbstractDedaleAgent;
 import eu.su.mas.dedale.mas.agents.GateKeeperAgent;
 import eu.su.mas.dedale.mas.agents.dedaleDummyAgents.DummyWumpusShift;
+import eu.su.mas.dedale.mas.agents.dedaleDummyAgents.DummyWumpusShift2;
 
 import jade.core.Profile;
 import jade.core.ProfileImpl;
@@ -294,7 +296,7 @@ public class PrincipalGolem {
 		Assert.assertNotNull("This container does not exist",c);
 //		
 //		//2) Give the name of your agent, MUST be the same as the one given in the entities file.
-		agentName="Golem";
+		agentName="Golem1";
 //		
 //		//3) If you want to give specific parameters to your agent, add them here
 		Object [] entityParameters={"My parameters"};
