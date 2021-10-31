@@ -1,5 +1,4 @@
 # Dedale_FOSYMA
-Projet Dedale FOSYMA
 
 Multi-agent system in the Dedale environment : https://dedale.gitlab.io/page/about/
 
